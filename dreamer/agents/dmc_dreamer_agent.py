@@ -12,5 +12,5 @@ class DMCDreamerAgent(DreamerAgent):
                     output_size=env_spaces.action.shape[0],
                     action_shape=env_spaces.action.shape[0],
                     action_dist='tanh_normal',
-                    action_low=env_space.action.low,
+                    action_low=env_spaces.action.low,
                     action_high=env_spaces.action.high)
