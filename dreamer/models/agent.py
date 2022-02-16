@@ -14,8 +14,6 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            action_low,
-            action_high,
             stochastic_size=30,
             deterministic_size=200,
             hidden_size=200,
@@ -51,7 +49,7 @@ class AgentModel(nn.Module):
         self.action_dist = action_dist
 
         self.mpc_planner = MPC_planner(50, 1, feature_size, output_size, self.transition, 
-                action_low = action_low, action_high = action_high)
+                action_low = kwargs['action_low'], action_high = kwargs['action_high'])
         self.goal_state = load_goal_state(dtype)
         self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
         self.dtype = dtype
