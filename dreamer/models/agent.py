@@ -10,6 +10,7 @@ from dreamer.models.dense import DenseModel
 from dreamer.models.observation import ObservationDecoder, ObservationEncoder
 from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, RSSMRollout, get_feat
 
+from dreamer.models.mpc_planner import MPC_planner, load_goal_state
 
 class AgentModel(nn.Module):
     def __init__(
@@ -48,9 +49,10 @@ class AgentModel(nn.Module):
         feature_size = stochastic_size + deterministic_size
         self.action_size = output_size
         self.action_dist = action_dist
-        self.action_decoder = ActionDecoder(output_size, feature_size, action_hidden_size, action_layers, action_dist)
-        self.reward_model = DenseModel(feature_size, reward_shape, reward_layers, reward_hidden)
-        self.value_model = DenseModel(feature_size, value_shape, value_layers, value_hidden)
+
+        self.mpc_planner = MPC_planner(50, 1, feature_size, output_size, self.transition)
+        self.goal_state = load_goal_state(dtype)
+        self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
         self.dtype = dtype
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
@@ -59,14 +61,13 @@ class AgentModel(nn.Module):
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None):
         state = self.get_state_representation(observation, prev_action, prev_state)
-        action, action_dist = self.policy(state)
-        value = self.value_model(get_feat(state))
-        reward = self.reward_model(get_feat(state))
-        return action, action_dist, value, reward, state
+        action = self.policy(state)
+        return action, state
 
     def policy(self, state: RSSMState):
         feat = get_feat(state)
-        action_dist = self.action_decoder(feat)
+        action_dist = self.mpc_planner.get_next_action(feat)
+        '''
         if self.action_dist == 'tanh_normal':
             if self.training:  # use agent.train(bool) or agent.eval()
                 action = action_dist.rsample()
@@ -80,7 +81,8 @@ class AgentModel(nn.Module):
             action = action_dist.rsample()
         else:
             action = action_dist.sample()
-        return action, action_dist
+        '''
+        return action
 
     def get_state_representation(self, observation: torch.Tensor, prev_action: torch.Tensor = None,
                                  prev_state: RSSMState = None):
@@ -115,6 +117,16 @@ class AgentModel(nn.Module):
         return_spec = ModelReturnSpec(None, None)
         raise NotImplementedError()
 
+    def zero_action(self, obs):
+        latent = self.representation.initial_state(len(obs['image']))
+        action = tf.zeros(self.action_size, self.dtype)
+        embed = self.observation_encoder(obs)
+        latent, _ = self.representation(embed, action, latent)
+        feat = get_feat(latent)
+        return feat
+
+    def update_mpc_planner(self):
+        self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
 
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None):

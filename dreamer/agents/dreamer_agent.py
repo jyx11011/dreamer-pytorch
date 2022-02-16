@@ -51,6 +51,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         agent_step = AgentStep(action=action, agent_info=agent_info)
         return buffer_to(agent_step, device='cpu')
 
+    '''
     @torch.no_grad()
     def value(self, observation, prev_action, prev_reward):
         """
@@ -61,6 +62,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         agent_inputs = buffer_to((observation, prev_action), device=self.device)
         action, action_dist, value, reward, state = self.model(*agent_inputs, self.prev_rnn_state)
         return value.to("cpu")
+    '''
 
     def exploration(self, action: torch.Tensor) -> torch.Tensor:
         """

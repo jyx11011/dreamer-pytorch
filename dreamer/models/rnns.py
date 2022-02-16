@@ -85,7 +85,7 @@ class RSSMTransition(TransitionBase):
             torch.zeros(batch_size, self._stoch_size, **kwargs),
             torch.zeros(batch_size, self._deter_size, **kwargs),
         )
-
+    #img_step
     def forward(self, prev_action: torch.Tensor, prev_state: RSSMState):
         rnn_input = self._rnn_input_model(torch.cat([prev_action, prev_state.stoch], dim=-1))
         deter_state = self._cell(rnn_input, prev_state.deter)
@@ -95,6 +95,15 @@ class RSSMTransition(TransitionBase):
         stoch_state = dist.rsample()
         return RSSMState(mean, std, stoch_state, deter_state)
 
+    def transit(self, prev_action: torch.Tensor, prev_feat: torch.Tensor):
+        stoch, deter = torch.split(prev_feat, [self._stoch_size, self._deter_size], dim=-1)
+        rnn_input = self._rnn_input_model(torch.cat([prev_action, stoch], dim=-1))
+        deter_state = self._cell(rnn_input, pdeter)
+        mean, std = torch.chunk(self._stochastic_prior_model(deter_state), 2, dim=-1)
+        std = tf.softplus(std) + 0.1
+        dist = self._dist(mean, std)
+        stoch_state = dist.rsample()
+        return torch.cat((stoch_state, deter_state), dim=-1)
 
 class RSSMRepresentation(RepresentationBase):
     def __init__(self, transition_model: RSSMTransition, obs_embed_size, action_size, stochastic_size=30,
@@ -123,7 +132,7 @@ class RSSMRepresentation(RepresentationBase):
             torch.zeros(batch_size, self._stoch_size, **kwargs),
             torch.zeros(batch_size, self._deter_size, **kwargs),
         )
-
+    #obs_step
     def forward(self, obs_embed: torch.Tensor, prev_action: torch.Tensor, prev_state: RSSMState):
         prior_state = self._transition_model(prev_action, prev_state)
         x = torch.cat([prior_state.deter, obs_embed], -1)

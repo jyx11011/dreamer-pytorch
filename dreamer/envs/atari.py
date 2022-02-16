@@ -58,7 +58,7 @@ class AtariEnv(Env):
         if self._grayscale:
             self._env.ale.getScreenGrayscale(self._buffers[0])
         else:
-            self._env.ale.getScreenRGB2(self._buffers[0])
+            self._env.ale.getScreenRGB(self._buffers[0])
         self._buffers[1].fill(0)
         self._step_counter = 0
         return self._get_obs()
@@ -79,7 +79,7 @@ class AtariEnv(Env):
                 if self._grayscale:
                     self._env.ale.getScreenGrayscale(self._buffers[index])
                 else:
-                    self._env.ale.getScreenRGB2(self._buffers[index])
+                    self._env.ale.getScreenRGB(self._buffers[index])
         obs = self._get_obs()
         env_info = EnvInfo(None, total_reward, done)
         return EnvStep(obs, total_reward, done, env_info)
