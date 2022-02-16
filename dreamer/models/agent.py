@@ -47,12 +47,12 @@ class AgentModel(nn.Module):
         feature_size = stochastic_size + deterministic_size
         self.action_size = output_size
         self.action_dist = action_dist
-
+        self.dtype = dtype
+        
         self.mpc_planner = MPC_planner(50, 1, feature_size, output_size, self.transition, 
                 action_low = kwargs['action_low'], action_high = kwargs['action_high'])
         self.goal_state = load_goal_state(dtype)
-        self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
-        self.dtype = dtype
+        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
         if use_pcont:
@@ -117,15 +117,15 @@ class AgentModel(nn.Module):
         raise NotImplementedError()
 
     def zero_action(self, obs):
-        latent = self.representation.initial_state(len(obs['image']))
-        action = tf.zeros(self.action_size, self.dtype)
+        latent = self.representation.initial_state(len(obs))
+        action = torch.zeros(1,self.action_size)
         embed = self.observation_encoder(obs)
         latent, _ = self.representation(embed, action, latent)
         feat = get_feat(latent)
         return feat
 
     def update_mpc_planner(self):
-        self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
+        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
 
 class AtariDreamerModel(AgentModel):
@@ -138,7 +138,7 @@ class AtariDreamerModel(AgentModel):
                                                            dtype=self.dtype)
         state = self.get_state_representation(observation, prev_action, prev_state)
 
-        action, action_dist = self.policy(state)
+        action = self.policy(state)
         return_spec = ModelReturnSpec(action, state)
         return_spec = buffer_func(return_spec, restore_leading_dims, lead_dim, T, B)
         return return_spec

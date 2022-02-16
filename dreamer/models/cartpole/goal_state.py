@@ -10,7 +10,7 @@ if __name__=="__main__":
     f=domain+"_"+task
     obs=env.physics.render(64,64,camera_id=camera).transpose(2, 0, 1)
 
-    print(env.physics.named.data.qpos)
+    #print(env.physics.named.data.qpos)
     np.save(f,obs)
 
 #export MUJOCO_GL=egl

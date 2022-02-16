@@ -98,7 +98,7 @@ class RSSMTransition(TransitionBase):
     def transit(self, prev_action: torch.Tensor, prev_feat: torch.Tensor):
         stoch, deter = torch.split(prev_feat, [self._stoch_size, self._deter_size], dim=-1)
         rnn_input = self._rnn_input_model(torch.cat([prev_action, stoch], dim=-1))
-        deter_state = self._cell(rnn_input, pdeter)
+        deter_state = self._cell(rnn_input, deter)
         mean, std = torch.chunk(self._stochastic_prior_model(deter_state), 2, dim=-1)
         std = tf.softplus(std) + 0.1
         dist = self._dist(mean, std)

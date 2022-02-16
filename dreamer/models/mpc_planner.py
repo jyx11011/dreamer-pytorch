@@ -1,3 +1,4 @@
+import os
 import gym
 import numpy as np
 import torch
@@ -10,8 +11,7 @@ class Dynamics(torch.nn.Module):
         self._dynamics=dynamics
 
     def forward(self, state, action):
-        act = torch.unsqueeze(action, 0)
-        return self._dynamics.transit(act, state)
+        return self._dynamics.transit(action, state)
 
 class MPC_planner:
     def __init__(self, timesteps, n_batch, nx, nu, dynamics,
@@ -39,24 +39,20 @@ class MPC_planner:
         self._dynamics = Dynamics(dynamics)
 
     def set_goal_state(self, state):
-        state = state.numpy()
-        goal_state = torch.tensor(state, dtype=self._dtype).view(1, -1)[0]
+        goal_state = torch.clone(state)[0]
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype)))
         p = p.repeat(self._timesteps, self._n_batch, 1)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
 
-    def get_next_action(self, state):
-        state = state.numpy()
-        state = torch.tensor(state, dtype=self._dtype).view(1, -1)
-        
+    def get_next_action(self, state): 
         ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low, u_upper=self._action_high, 
                         lqr_iter=self._iter, eps=self._eps, n_batch=1,
                         u_init=self._u_init,
                         exit_unconverged=False, backprop=False, verbose=0, 
-                        grad_method=mpc.GradMethods.FINITE_DIFF)
+                        grad_method=mpc.GradMethods.AUTO_DIFF)
 
         nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[0] 
@@ -67,5 +63,5 @@ class MPC_planner:
 def load_goal_state(dtype):
     domain = "cartpole"
     task = "balance"
-    goal_state_obs = np.load('./'+domain+'/'+domain+'_'+task+'.npy')
-    return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype)
+    goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
+    return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
