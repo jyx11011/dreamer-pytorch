@@ -5,8 +5,6 @@ from rlpyt.utils.buffer import buffer_func
 from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.tensor import infer_leading_dims, restore_leading_dims, to_onehot, from_onehot
 
-from dreamer.models.action import ActionDecoder
-from dreamer.models.dense import DenseModel
 from dreamer.models.observation import ObservationDecoder, ObservationEncoder
 from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, RSSMRollout, get_feat
 
@@ -16,6 +14,8 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
+            action_low,
+            action_high,
             stochastic_size=30,
             deterministic_size=200,
             hidden_size=200,
@@ -50,7 +50,8 @@ class AgentModel(nn.Module):
         self.action_size = output_size
         self.action_dist = action_dist
 
-        self.mpc_planner = MPC_planner(50, 1, feature_size, output_size, self.transition)
+        self.mpc_planner = MPC_planner(50, 1, feature_size, output_size, self.transition, 
+                action_low = action_low, action_high = action_high)
         self.goal_state = load_goal_state(dtype)
         self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
         self.dtype = dtype
@@ -127,6 +128,7 @@ class AgentModel(nn.Module):
 
     def update_mpc_planner(self):
         self.mpc_planner.set_goal_state(self.zero_action(self.observation_encoder(self.goal_state)))
+
 
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None):
