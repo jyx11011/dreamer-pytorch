@@ -3,6 +3,7 @@ import gym
 import numpy as np
 import torch
 import torch.autograd
+import tensorflow as tf
 from mpc import mpc
 
 class Dynamics(torch.nn.Module):
@@ -11,7 +12,14 @@ class Dynamics(torch.nn.Module):
         self._dynamics=dynamics
 
     def forward(self, state, action):
-        return self._dynamics.transit(action, state)
+        stoch, deter = torch.split(state, [self._dynamics._stoch_size, self._dynamics._deter_size], dim=-1)
+        rnn_input = self._dynamics._rnn_input_model(torch.cat([prev_action, stoch], dim=-1))
+        deter_state = self._dynamics._cell(rnn_input, deter)
+        mean, std = torch.chunk(self._dynamics._stochastic_prior_model(deter_state), 2, dim=-1)
+        std = tf.softplus(std) + 0.1
+        dist = self._dynamics._dist(mean, std)
+        stoch_state = dist.rsample()
+        return torch.cat((stoch_state, deter_state), dim=-1)
 
 class MPC_planner:
     def __init__(self, timesteps, n_batch, nx, nu, dynamics,
