@@ -31,7 +31,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
     def __call__(self, observation, prev_action, init_rnn_state):
         model_inputs = buffer_to((observation, prev_action, init_rnn_state), device=self.device)
         return self.model(*model_inputs)
-
+    
     @torch.no_grad()
     def step(self, observation, prev_action, prev_reward):
         """"

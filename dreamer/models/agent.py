@@ -67,9 +67,7 @@ class AgentModel(nn.Module):
 
     def policy(self, state: RSSMState):
         feat = get_feat(state)
-        #action_dist = self.mpc_planner.get_next_action(feat)
-        with FreezeParameters([self.transition]):
-            action = self.mpc_planner.get_next_action(feat)
+        action = self.mpc_planner.get_next_action(feat)
         '''
         if self.action_dist == 'tanh_normal':
             if self.training:  # use agent.train(bool) or agent.eval()

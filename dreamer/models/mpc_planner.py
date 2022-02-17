@@ -8,23 +8,20 @@ from mpc import mpc
 
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
-        super().__init__()
+        super(Dynamics, self).__init__()
         self._dynamics=dynamics
 
     def forward(self, state, action):
-        #stoch, deter = torch.split(state, [self._dynamics._stoch_size, self._dynamics._deter_size], dim=-1)
-        #rnn_input = self._dynamics._rnn_input_model(torch.cat([action, stoch], dim=-1))
-        #deter_state = self._dynamics._cell(rnn_input, deter)
-        #mean, std = torch.chunk(self._dynamics._stochastic_prior_model(deter_state), 2, dim=-1)
-        #std = tf.softplus(std) + 0.1
-        #dist = self._dynamics._dist(mean, std)
-        #stoch_state = dist.rsample()
-        #return torch.cat((stoch_state, deter_state), dim=-1)
-        #return torch.cat((stoch, deter), dim=-1)
-        s=state.requires_grad()
-        s=s*0.1
-        print(state.requires_grad,s.requires_grad)
-        return s
+        stoch, deter = torch.split(state, [self._dynamics._stoch_size, self._dynamics._deter_size], dim=-1)
+        rnn_input = self._dynamics._rnn_input_model(torch.cat([action, stoch], dim=-1))
+        deter_state = self._dynamics._cell(rnn_input, deter)
+        mean, std = torch.chunk(self._dynamics._stochastic_prior_model(deter_state), 2, dim=-1)
+        std = tf.softplus(std) + 0.1
+        dist = self._dynamics._dist(mean, std)
+        stoch_state = dist.rsample()
+        return torch.cat((stoch_state, deter_state), dim=-1)
+        #return torch.cat((stoch,deter), dim=-1)
+        #return state
 
 class MPC_planner:
     def __init__(self, timesteps, n_batch, nx, nu, dynamics,
@@ -60,13 +57,14 @@ class MPC_planner:
         self._u_init = None
 
     def get_next_action(self, state):
-        ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
+        with torch.enable_grad():
+            ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low, u_upper=self._action_high, 
                         lqr_iter=self._iter, eps=self._eps, n_batch=1,
                         u_init=self._u_init,
-                        exit_unconverged=False, backprop=False, verbose=1, 
+                        exit_unconverged=False, backprop=False, verbose=0, 
                         grad_method=mpc.GradMethods.AUTO_DIFF)
-        nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
+            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[0] 
         self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, self._n_batch, self._nu, dtype=self._dtype)), dim=0)
 
