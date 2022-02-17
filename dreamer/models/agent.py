@@ -10,6 +10,8 @@ from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, R
 
 from dreamer.models.mpc_planner import MPC_planner, load_goal_state
 
+from dreamer.utils.module import get_parameters, FreezeParameters
+
 class AgentModel(nn.Module):
     def __init__(
             self,
@@ -65,7 +67,9 @@ class AgentModel(nn.Module):
 
     def policy(self, state: RSSMState):
         feat = get_feat(state)
-        action_dist = self.mpc_planner.get_next_action(feat)
+        #action_dist = self.mpc_planner.get_next_action(feat)
+        with FreezeParameters([self.transition]):
+            action = self.mpc_planner.get_next_action(feat)
         '''
         if self.action_dist == 'tanh_normal':
             if self.training:  # use agent.train(bool) or agent.eval()
