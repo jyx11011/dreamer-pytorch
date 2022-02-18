@@ -16,15 +16,15 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=20,
-            deterministic_size=100,
-            hidden_size=100,
+            stochastic_size=3,
+            deterministic_size=20,
+            hidden_size=20,
             image_shape=(3, 64, 64),
             action_dist='one_hot',
             dtype=torch.float,
             use_pcont=False,
             pcont_layers=3,
-            pcont_hidden=100,
+            pcont_hidden=20,
             **kwargs,
     ):
         super().__init__()
@@ -111,11 +111,12 @@ class AgentModel(nn.Module):
         raise NotImplementedError()
 
     def zero_action(self, obs):
-        latent = self.representation.initial_state(len(obs))
-        action = torch.zeros(1,self.action_size)
-        embed = self.observation_encoder(obs)
-        latent, _ = self.representation(embed, action, latent)
-        feat = get_feat(latent)
+        with torch.no_grad():
+            latent = self.representation.initial_state(len(obs))
+            action = torch.zeros(1,self.action_size)
+            embed = self.observation_encoder(obs)
+            latent, _ = self.representation(embed, action, latent)
+            feat = get_feat(latent)
         return feat
 
     def update_mpc_planner(self):
