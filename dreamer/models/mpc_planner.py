@@ -34,7 +34,6 @@ class MPC_planner:
         self._nu = nu
         self._action_low = action_low.item()
         self._action_high = action_high.item()
-        self._eps = eps
         self._dtype=torch.float
 
         if goal_weights is None:
@@ -61,7 +60,7 @@ class MPC_planner:
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low, u_upper=self._action_high, 
-                        lqr_iter=self._iter, eps=self._eps, n_batch=n_batch,
+                        lqr_iter=self._iter, n_batch=n_batch,
                         u_init=self._u_init,max_linesearch_iter=20,linesearch_decay=0.5,
                         exit_unconverged=False, backprop=True, detach_unconverged = False, verbose=0, 
                         grad_method=mpc.GradMethods.AUTO_DIFF)
