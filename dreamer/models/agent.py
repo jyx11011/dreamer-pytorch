@@ -51,7 +51,7 @@ class AgentModel(nn.Module):
         self.action_dist = action_dist
         self.dtype = dtype
         
-        self.mpc_planner = MPC_planner(10, 1, feature_size, output_size, self.transition, 
+        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition, 
                 action_low = kwargs['action_low'], action_high = kwargs['action_high'])
         self.goal_state = load_goal_state(dtype)
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))

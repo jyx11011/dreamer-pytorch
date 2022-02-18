@@ -23,11 +23,11 @@ class Dynamics(torch.nn.Module):
 
 
 class MPC_planner:
-    def __init__(self, timesteps, n_batch, nx, nu, dynamics,
+    def __init__(self, nx, nu, dynamics,
+            time_steps=50,
             goal_weights=None, ctrl_penalty=0.001, iter=5,
             action_low=None, action_high=None, eps=0.01):
-        self._timesteps = timesteps
-        self._n_batch = n_batch
+        self._time_steps=time_steps
         self._u_init = None
         self._iter = iter
         self._nx = nx
@@ -44,28 +44,30 @@ class MPC_planner:
             goal_weights,
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
-        self._Q = torch.diag(q).repeat(timesteps, n_batch, 1, 1).type(self._dtype)  # T x B x nx+nu x nx+nu
+        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
+
         self._dynamics = Dynamics(dynamics)
 
     def set_goal_state(self, state):
         goal_state = torch.clone(state)[0]
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype)))
-        p = p.repeat(self._timesteps, self._n_batch, 1)
+        p = p.repeat(self._timesteps, 1)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
 
     def get_next_action(self, state):
+        n_batch = state.shape[0]
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low, u_upper=self._action_high, 
-                        lqr_iter=self._iter, eps=self._eps, n_batch=1,
+                        lqr_iter=self._iter, eps=self._eps, n_batch=n_batch,
                         u_init=self._u_init,
                         exit_unconverged=False, backprop=False, verbose=0, 
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[0] 
-        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, self._n_batch, self._nu, dtype=self._dtype)), dim=0)
+        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype)), dim=0)
 
         return action
 
