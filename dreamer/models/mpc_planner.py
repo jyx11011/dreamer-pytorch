@@ -20,8 +20,7 @@ class Dynamics(torch.nn.Module):
         dist = self._dynamics._dist(mean, std)
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
-        #return torch.cat((stoch,deter), dim=-1)
-        #return state
+
 
 class MPC_planner:
     def __init__(self, timesteps, n_batch, nx, nu, dynamics,
@@ -39,7 +38,7 @@ class MPC_planner:
         self._dtype=torch.float
 
         if goal_weights is None:
-            goal_weights = torch.ones(nx, dtype=self._dtype)
+            goal_weights = 100 * torch.ones(nx, dtype=self._dtype)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
@@ -74,4 +73,4 @@ def load_goal_state(dtype):
     domain = "cartpole"
     task = "balance"
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
-    return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
+    return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).transpose(2,0,1).unsqueeze(0)
