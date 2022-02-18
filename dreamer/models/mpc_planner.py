@@ -26,14 +26,14 @@ class MPC_planner:
     def __init__(self, nx, nu, dynamics,
             timesteps=50,
             goal_weights=None, ctrl_penalty=0.001, iter=5,
-            action_low=None, action_high=None, eps=0.01):
+            action_low=None, action_high=None, eps=0.001):
         self._timesteps=timesteps
         self._u_init = None
         self._iter = iter
         self._nx = nx
         self._nu = nu
-        self._action_low = torch.ones([timesteps, n_batch, nu]) * action_low
-        self._action_high = torch.ones([timesteps, n_batch, nu]) * action_high
+        self._action_low = action_low.item()
+        self._action_high = action_high.item()
         self._eps = eps
         self._dtype=torch.float
 
