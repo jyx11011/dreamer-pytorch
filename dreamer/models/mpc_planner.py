@@ -73,4 +73,4 @@ def load_goal_state(dtype):
     domain = "cartpole"
     task = "balance"
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
-    return torch.tensor(goal_state_obs.transpose(2,0,1) / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
+    return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
