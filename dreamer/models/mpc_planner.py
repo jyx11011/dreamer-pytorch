@@ -43,7 +43,7 @@ class MPC_planner:
             goal_weights,
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
-        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
+        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype).cuda()
 
         self._dynamics = Dynamics(dynamics)
 
@@ -51,7 +51,7 @@ class MPC_planner:
         goal_state = torch.clone(state)[0]
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype)))
-        p = p.repeat(self._timesteps, 1)
+        p = p.repeat(self._timesteps, 1).cuda()
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
 
@@ -59,14 +59,21 @@ class MPC_planner:
         n_batch = state.shape[0]
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
-                        u_lower=self._action_low, u_upper=self._action_high, 
-                        lqr_iter=self._iter, n_batch=n_batch,
-                        u_init=self._u_init,max_linesearch_iter=20,linesearch_decay=0.5,
-                        exit_unconverged=False, backprop=True, detach_unconverged = False, verbose=0, 
+                        u_lower=self._action_low * torch.one(self._timesteps, n_batch, nu).cuda(), 
+                        u_upper=self._action_high * torch.one(self._timesteps, n_batch, nu).cuda(), 
+                        lqr_iter=self._iter, 
+                        n_batch=n_batch,
+                        u_init=self._u_init,
+                        max_linesearch_iter=20,
+                        linesearch_decay=0.5,
+                        exit_unconverged=False, 
+                        backprop=True, 
+                        detach_unconverged = False, 
+                        verbose=0, 
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[0] 
-        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype)), dim=0)
+        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype)), dim=0).cuda()
 
         return action
 
