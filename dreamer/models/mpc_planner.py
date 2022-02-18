@@ -24,10 +24,10 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            time_steps=50,
+            timesteps=50,
             goal_weights=None, ctrl_penalty=0.001, iter=5,
             action_low=None, action_high=None, eps=0.01):
-        self._time_steps=time_steps
+        self._timesteps=timesteps
         self._u_init = None
         self._iter = iter
         self._nx = nx
