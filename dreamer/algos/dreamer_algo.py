@@ -15,8 +15,8 @@ from dreamer.utils.module import get_parameters, FreezeParameters
 
 torch.autograd.set_detect_anomaly(True)  # used for debugging gradients
 
-loss_info_fields = ['model_loss', 'actor_loss', 'value_loss', 'prior_entropy', 'post_entropy', 'divergence',
-                    'reward_loss', 'image_loss', 'pcont_loss']
+loss_info_fields = ['model_loss', 'prior_entropy', 'post_entropy', 'divergence',
+                    'image_loss', 'pcont_loss']
 LossInfo = namedarraytuple('LossInfo', loss_info_fields)
 OptInfo = namedarraytuple("OptInfo",
                           ['loss', 'grad_norm_model', 'grad_norm_actor', 'grad_norm_value'] + loss_info_fields)
