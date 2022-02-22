@@ -45,7 +45,7 @@ class MPC_planner:
         ))
         self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype).cuda()
 
-        self._dynamics = Dynamics(dynamics)
+        self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
         goal_state = torch.clone(state)[0]
@@ -56,11 +56,14 @@ class MPC_planner:
         self._u_init = None
 
     def get_next_action(self, state):
+        self._dynamics.cuda()
         n_batch = state.shape[0]
+        self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        state = torch.clone(state).cuda()
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
-                        u_lower=self._action_low * torch.one(self._timesteps, n_batch, nu).cuda(), 
-                        u_upper=self._action_high * torch.one(self._timesteps, n_batch, nu).cuda(), 
+                        u_lower=self._action_low * torch.ones(self._timesteps, n_batch, self._nu).cuda(), 
+                        u_upper=self._action_high * torch.ones(self._timesteps, n_batch, self._nu).cuda(), 
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
@@ -72,9 +75,9 @@ class MPC_planner:
                         verbose=0, 
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
-        action = nominal_actions[0] 
-        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype)), dim=0).cuda()
-
+        action = nominal_actions[0]
+        self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype).cuda()), dim=0)
+        self._dynamics.cpu()
         return action
 
 def load_goal_state(dtype):
