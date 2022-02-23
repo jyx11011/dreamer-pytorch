@@ -32,8 +32,6 @@ class Dreamer(RlAlgorithm):
             train_steps=100,
             pretrain=100,
             model_lr=6e-4,
-            value_lr=8e-5,
-            actor_lr=8e-5,
             grad_clip=100.0,
             dataset_balance=False,
             discount=0.99,
@@ -105,7 +103,7 @@ class Dreamer(RlAlgorithm):
             self.load_optim_state_dict(self.initial_optim_state_dict)
         # must define these fields to for logging purposes. Used by runner.
         self.opt_info_fields = OptInfo._fields
-
+    '''
     def optim_state_dict(self):
         """Return the optimizer state dict (e.g. Adam); overwrite if using
                 multiple optimizers."""
@@ -117,7 +115,7 @@ class Dreamer(RlAlgorithm):
         """Load an optimizer state dict; should expect the format returned
         from ``optim_state_dict().``"""
         self.model_optimizer.load_state_dict(state_dict['model_optimizer_dict'])
-
+    '''
     def optimize_agent(self, itr, samples=None, sampler_itr=None):
         itr = itr if sampler_itr is None else sampler_itr
         if samples is not None:
@@ -153,7 +151,6 @@ class Dreamer(RlAlgorithm):
                 if hasattr(opt_info, field):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
-        self.agent.model.update_mpc_planner()
         return opt_info
 
     def loss(self, samples: SamplesFromReplay, sample_itr: int, opt_itr: int):
@@ -167,6 +164,7 @@ class Dreamer(RlAlgorithm):
         :return: FloatTensor containing the loss
         """
         model = self.agent.model
+        self.agent.model.update_mpc_planner()
 
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
         done = samples.done
@@ -223,9 +221,10 @@ class Dreamer(RlAlgorithm):
                 flat_post = buffer_method(post, 'reshape', batch_size, -1)
         # Rollout the policy for self.horizon steps. Variable names with imag_ indicate this data is imagined not real.
         # imag_feat shape is [horizon, batch_t * batch_b, feature_size]
+        '''
         with FreezeParameters(self.model_modules):
             imag_dist, _ = model.rollout.rollout_policy(self.horizon, model.policy, flat_post)
-
+        '''
         # Use state features (deterministic and stochastic) to predict the image and reward
         #imag_feat = get_feat(imag_dist)  # [horizon, batch_t * batch_b, feature_size]
         # Assumes these are normal distributions. In the TF code it's be mode, but for a normal distribution mean = mode
