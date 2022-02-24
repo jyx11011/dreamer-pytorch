@@ -55,6 +55,8 @@ class MPC_planner:
         self._Q=self._Q.to(state.device)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
+        print(state.device)
+        self._dynamics=self._dynamics.to(state.device)
 
     def get_next_action(self, state):
         n_batch = state.shape[0]
