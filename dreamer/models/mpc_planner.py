@@ -58,7 +58,7 @@ class MPC_planner:
     def get_next_action(self, state):
         self._dynamics.cuda()
         n_batch = state.shape[0]
-        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state).cuda()
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
