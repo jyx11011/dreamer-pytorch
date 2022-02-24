@@ -33,7 +33,7 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
         env_kwargs=dict(name=game),
         eval_env_kwargs=dict(name=game),
         batch_T=10,
-        batch_B=50,
+        batch_B=100,
         max_decorrelation_steps=0,
         eval_n_envs=10,
         eval_max_steps=int(10e3),
