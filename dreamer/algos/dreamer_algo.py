@@ -19,7 +19,7 @@ loss_info_fields = ['model_loss', 'prior_entropy', 'post_entropy', 'divergence',
                     'image_loss', 'pcont_loss']
 LossInfo = namedarraytuple('LossInfo', loss_info_fields)
 OptInfo = namedarraytuple("OptInfo",
-                          ['loss', 'grad_norm_model', 'grad_norm_actor', 'grad_norm_value'] + loss_info_fields)
+                          ['loss', 'grad_norm_model'] + loss_info_fields)
 
 
 class Dreamer(RlAlgorithm):
@@ -103,11 +103,7 @@ class Dreamer(RlAlgorithm):
             self.load_optim_state_dict(self.initial_optim_state_dict)
         # must define these fields to for logging purposes. Used by runner.
         self.opt_info_fields = OptInfo._fields
-<<<<<<< HEAD
-        
-=======
-    
->>>>>>> ae34e7811f1b1e972a01d41786f8ffc0a6372ee7
+
     def optim_state_dict(self):
         """Return the optimizer state dict (e.g. Adam); overwrite if using
                 multiple optimizers."""
