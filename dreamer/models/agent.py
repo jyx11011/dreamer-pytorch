@@ -51,6 +51,7 @@ class AgentModel(nn.Module):
         self.deterministic_size = deterministic_size
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
+        self.goal_state = self.goal_state.cuda()
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,
             rand=False):
@@ -116,8 +117,8 @@ class AgentModel(nn.Module):
 
     def zero_action(self, obs):
         with torch.no_grad():
-            latent = self.representation.initial_state(len(obs))
-            action = torch.zeros(1,self.action_size)
+            latent = self.representation.initial_state(len(obs), device=obs.device)
+            action = torch.zeros(1,self.action_size, device=obs.device)
             embed = self.observation_encoder(obs)
             latent, _ = self.representation(embed, action, latent)
             feat = get_feat(latent)
