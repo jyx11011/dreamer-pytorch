@@ -103,7 +103,7 @@ class Dreamer(RlAlgorithm):
             self.load_optim_state_dict(self.initial_optim_state_dict)
         # must define these fields to for logging purposes. Used by runner.
         self.opt_info_fields = OptInfo._fields
-    '''
+        
     def optim_state_dict(self):
         """Return the optimizer state dict (e.g. Adam); overwrite if using
                 multiple optimizers."""
@@ -115,7 +115,7 @@ class Dreamer(RlAlgorithm):
         """Load an optimizer state dict; should expect the format returned
         from ``optim_state_dict().``"""
         self.model_optimizer.load_state_dict(state_dict['model_optimizer_dict'])
-    '''
+
     def optimize_agent(self, itr, samples=None, sampler_itr=None):
         itr = itr if sampler_itr is None else sampler_itr
         if samples is not None:
