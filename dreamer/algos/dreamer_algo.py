@@ -167,6 +167,7 @@ class Dreamer(RlAlgorithm):
         self.agent.model.update_mpc_planner()
 
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
+        action = samples.all_action[1:]
         done = samples.done
         done = done.unsqueeze(2)
 
