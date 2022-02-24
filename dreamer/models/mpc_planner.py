@@ -56,9 +56,8 @@ class MPC_planner:
         self._u_init = None
 
     def get_next_action(self, state):
-        self._dynamics.cuda()
         n_batch = state.shape[0]
-        self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state).cuda()
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
@@ -66,7 +65,7 @@ class MPC_planner:
                         u_upper=self._action_high * torch.ones(self._timesteps, n_batch, self._nu).cuda(), 
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
-                        u_init=self._u_init,
+                        u_init=self._u_init.cuda(),
                         max_linesearch_iter=10,
                         linesearch_decay=0.5,
                         exit_unconverged=False, 
@@ -77,7 +76,6 @@ class MPC_planner:
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[0]
         self._u_init = torch.cat((nominal_actions[1:], torch.zeros(1, n_batch, self._nu, dtype=self._dtype).cuda()), dim=0)
-        self._dynamics.cpu()
         return action
 
 def load_goal_state(dtype):

@@ -52,9 +52,13 @@ class AgentModel(nn.Module):
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
 
-    def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None):
+    def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,
+            rand=False):
         state = self.get_state_representation(observation, prev_action, prev_state)
-        action = self.policy(state)
+        if rand:
+            action = torch.randn(*prev_action.shape)
+        else:
+            action = self.policy(state)
         return action, state
 
     def policy(self, state: RSSMState):

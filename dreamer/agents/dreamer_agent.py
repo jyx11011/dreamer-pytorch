@@ -42,7 +42,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         (no grad)
         """
         model_inputs = buffer_to((observation, prev_action), device=self.device)
-        action, state = self.model(*model_inputs, self.prev_rnn_state)
+        action, state = self.model(*model_inputs, self.prev_rnn_state, self._itr<5000)
         action = self.exploration(action)
         # Model handles None, but Buffer does not, make zeros if needed:
         prev_state = self.prev_rnn_state or buffer_func(state, torch.zeros_like)
@@ -51,6 +51,9 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         agent_step = AgentStep(action=action, agent_info=agent_info)
         return buffer_to(agent_step, device='cpu')
 
+    def sample_mode(self, itr):
+        super().sample_mode(itr)
+        self._itr=itr
     '''
     @torch.no_grad()
     def value(self, observation, prev_action, prev_reward):
