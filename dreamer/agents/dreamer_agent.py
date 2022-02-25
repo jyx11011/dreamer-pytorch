@@ -14,7 +14,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
     def __init__(self, ModelCls=AgentModel, train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
-                 model_kwargs=None, initial_model_state_dict=None, sample_rand=0.8):
+                 model_kwargs=None, initial_model_state_dict=None, sample_rand=1, rand_min=0.8):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
@@ -24,6 +24,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         self._mode = 'train'
         self._itr = 0
         self.sample_rand=sample_rand
+        self.rand_min=rand_min
 
     def make_env_to_model_kwargs(self, env_spaces):
         """Generate any keyword args to the model which depend on environment interfaces."""
@@ -57,6 +58,11 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
     def sample_mode(self, itr):
         super().sample_mode(itr)
         self._itr=itr
+        if itr%1000==0:
+            self.sample_rand=self.sample_rand-itr/1000000
+            if self.sample_rand<self.rand_min:
+                self.sample_rand = self.rand_min
+
     '''
     @torch.no_grad()
     def value(self, observation, prev_action, prev_reward):

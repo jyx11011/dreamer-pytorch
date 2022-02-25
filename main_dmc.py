@@ -17,7 +17,7 @@ from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 
 
-def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=0.8):
+def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=1):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     parser.add_argument('--save-model', help='save model', type=str, default='last',
                         choices=['all', 'none', 'gap', 'last'])
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
-    parser.add_argument('--sample-rand', help='between 0 and 1', type=float)
+    parser.add_argument('--sample-rand', help='between 0 and 1', type=float, default=1)
     
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
