@@ -43,7 +43,8 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         """
         model_inputs = buffer_to((observation, prev_action), device=self.device)
         action, state = self.model(*model_inputs, self.prev_rnn_state, self._itr<=5000)
-        action = self.exploration(action)
+        if self._itr>5000:
+            action = self.exploration(action)
         # Model handles None, but Buffer does not, make zeros if needed:
         prev_state = self.prev_rnn_state or buffer_func(state, torch.zeros_like)
         self.advance_rnn_state(state)
