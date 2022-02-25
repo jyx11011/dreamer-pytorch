@@ -14,7 +14,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
     def __init__(self, ModelCls=AgentModel, train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
-                 model_kwargs=None, initial_model_state_dict=None):
+                 model_kwargs=None, initial_model_state_dict=None, sample_rand=0.8):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
@@ -23,6 +23,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         super().__init__(ModelCls, model_kwargs, initial_model_state_dict)
         self._mode = 'train'
         self._itr = 0
+        self.sample_rand=sample_rand
 
     def make_env_to_model_kwargs(self, env_spaces):
         """Generate any keyword args to the model which depend on environment interfaces."""
@@ -42,8 +43,9 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         (no grad)
         """
         model_inputs = buffer_to((observation, prev_action), device=self.device)
-        action, state = self.model(*model_inputs, self.prev_rnn_state, self._itr<=5000)
-        if self._itr>5000:
+        rand=self._itr<=5000 or np.random.rand()<=self.sample_rand
+        action, state = self.model(*model_inputs, self.prev_rnn_state, rand)
+        if not rand:
             action = self.exploration(action)
         # Model handles None, but Buffer does not, make zeros if needed:
         prev_state = self.prev_rnn_state or buffer_func(state, torch.zeros_like)

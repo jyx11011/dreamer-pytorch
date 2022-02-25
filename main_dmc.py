@@ -17,7 +17,7 @@ from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 
 
-def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None):
+def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=0.8):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
@@ -41,7 +41,7 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
     )
     algo = Dreamer(initial_optim_state_dict=optimizer_state_dict)  # Run with defaults.
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
-                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict)
+                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, sample_rand=sample_rand)
     runner_cls = MinibatchRlEval if eval else MinibatchRl
     runner = runner_cls(
         algo=algo,
@@ -67,6 +67,8 @@ if __name__ == "__main__":
     parser.add_argument('--save-model', help='save model', type=str, default='last',
                         choices=['all', 'none', 'gap', 'last'])
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
+    parser.add_argument('--sample-rand', help='between 0 and 1', type=float)
+    
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
         'data',
@@ -89,4 +91,5 @@ if __name__ == "__main__":
         eval=args.eval,
         save_model=args.save_model,
         load_model_path=args.load_model_path,
+        sample_rand=args.sample_rand
     )
