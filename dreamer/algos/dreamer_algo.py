@@ -151,6 +151,7 @@ class Dreamer(RlAlgorithm):
                 if hasattr(opt_info, field):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
+        self.agent.model.update_mpc_planner()
         return opt_info
 
     def loss(self, samples: SamplesFromReplay, sample_itr: int, opt_itr: int):
@@ -164,7 +165,6 @@ class Dreamer(RlAlgorithm):
         :return: FloatTensor containing the loss
         """
         model = self.agent.model
-        self.agent.model.update_mpc_planner()
 
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
         action = samples.all_action[1:]
