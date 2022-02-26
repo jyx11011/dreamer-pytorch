@@ -25,7 +25,10 @@ OptInfo = namedarraytuple("OptInfo",
 class Dreamer(RlAlgorithm):
 
     def __init__(
-            self,  # Hyper-parameters
+            self,  
+            evaluator,
+            evaluate_every=10000,
+            # Hyper-parameters
             batch_size=50,
             batch_length=50,
             train_every=1000,
@@ -71,6 +74,8 @@ class Dreamer(RlAlgorithm):
 
         self.optimizer = None
         self.type = type
+        self.evaluator = evaluator
+        self.evaluate_every = evaluate_every
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples, world_size=1, rank=0):
         self.agent = agent
@@ -151,7 +156,10 @@ class Dreamer(RlAlgorithm):
                 if hasattr(opt_info, field):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
-        self.agent.model.update_mpc_planner()
+        if itr % self.evaluate_every == 0:
+            self.evaluator.ctr(itr)
+        else:
+            self.agent.model.update_mpc_planner()
         return opt_info
 
     def loss(self, samples: SamplesFromReplay, sample_itr: int, opt_itr: int):

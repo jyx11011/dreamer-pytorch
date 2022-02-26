@@ -54,8 +54,14 @@ class AgentModel(nn.Module):
         self.goal_state = self.goal_state.cuda()
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,
-            rand=False):
+            rand=False, num=None):
         state = self.get_state_representation(observation, prev_action, prev_state)
+        if num is not None:
+            if num == 0:
+                return None, state
+            feat = get_feat(state)
+            actions = self.mpc_planner.get_next_action(state, num=num)
+            return actions, state
         if rand:
             action = torch.randn(*prev_action.shape)
         else:
@@ -129,7 +135,8 @@ class AgentModel(nn.Module):
 
 
 class AtariDreamerModel(AgentModel):
-    def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, rand = False):
+    def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
+            rand = False, num = None):
         lead_dim, T, B, img_shape = infer_leading_dims(observation, 3)
         observation = observation.reshape(T * B, *img_shape).type(self.dtype) / 255.0 - 0.5
         prev_action = prev_action.reshape(T * B, -1).to(self.dtype)
@@ -138,10 +145,17 @@ class AtariDreamerModel(AgentModel):
                                                            dtype=self.dtype)
         state = self.get_state_representation(observation, prev_action, prev_state)
 
+        if num is not None:
+            if num == 0:
+                return None, state
+            feat = get_feat(state)
+            actions = self.mpc_planner.get_next_action(state, num=num)
+            return actions, state
         if rand:
             action = torch.randn(*prev_action.shape)
         else:
             action = self.policy(state)
+
         return_spec = ModelReturnSpec(action, state)
         return_spec = buffer_func(return_spec, restore_leading_dims, lead_dim, T, B)
         return return_spec
