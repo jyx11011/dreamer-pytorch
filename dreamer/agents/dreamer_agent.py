@@ -44,7 +44,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         (no grad)
         """
         model_inputs = buffer_to((observation, prev_action), device=self.device)
-        rand=self._itr<=5000 or np.random.rand()<=self.sample_rand
+        rand=self._itr<=5000 or torch.rand(1)[0]<=self.sample_rand
         action, state = self.model(*model_inputs, self.prev_rnn_state, rand)
         if not rand:
             action = self.exploration(action)
@@ -59,7 +59,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         super().sample_mode(itr)
         self._itr=itr
         if itr%1000==0:
-            self.sample_rand=self.sample_rand-itr/1000000
+            self.sample_rand=self.sample_rand-1.0/1000
             if self.sample_rand<self.rand_min:
                 self.sample_rand = self.rand_min
 
