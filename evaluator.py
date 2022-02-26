@@ -1,7 +1,7 @@
 import datetime
 import torch
 
-from rlpyt.utils.buffer import numpify_buffer
+from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
@@ -15,7 +15,7 @@ class Evaluator:
         self.agent.reset()
         self.agent.eval_mode(itr)
 
-        observation = self.env.reset()
+        observation = torchify_buffer(self.env.reset())
 
         for t in range(self.T):
             act, _ = self.agent.step(observation, None, None)
