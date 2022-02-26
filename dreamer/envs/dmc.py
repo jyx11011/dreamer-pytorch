@@ -27,6 +27,7 @@ class DeepMindControl(Env):
         if camera is None:
             camera = dict(quadruped=2).get(domain, 0)
         self._camera = camera
+        self._obs=None
 
     @property
     def observation_space(self):
@@ -40,7 +41,7 @@ class DeepMindControl(Env):
 
     def step(self, action):
         time_step = self._env.step(action)
-        _ = dict(time_step.observation)
+        self._obs = dict(time_step.observation)
         obs = self.render()
         reward = time_step.reward or 0
         done = time_step.last()
@@ -58,6 +59,9 @@ class DeepMindControl(Env):
         if kwargs.get('mode', 'rgb_array') != 'rgb_array':
             raise ValueError("Only render mode 'rgb_array' is supported.")
         return self._env.physics.render(*self._size, camera_id=self._camera).transpose(2, 0, 1).copy()
+
+    def get_obs(self):
+        return self._obs
 
     @property
     def horizon(self):
