@@ -12,7 +12,8 @@ DreamerAgentInfo = namedarraytuple('DreamerAgentInfo', ['prev_state'])
 # see classes BaseAgent and RecurrentAgentMixin for documentation
 class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
-    def __init__(self, ModelCls=AgentModel, train_noise=0.4, eval_noise=0,
+    def __init__(self, ModelCls=AgentModel, 
+                 train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
                  model_kwargs=None, initial_model_state_dict=None, 
                  sample_rand=1, rand_min=0.8, eval_buffer_size=15):
@@ -97,7 +98,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         action, action_dist, value, reward, state = self.model(*agent_inputs, self.prev_rnn_state)
         return value.to("cpu")
     '''
-
+    '''
     def exploration(self, action: torch.Tensor) -> torch.Tensor:
         """
         :param action: action to take, shape (1,) (if categorical), or (action dim,) (if continuous)
@@ -130,3 +131,4 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                 action[..., index] = 1
             return action
         raise NotImplementedError(self.expl_type)
+    '''

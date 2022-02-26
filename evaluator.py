@@ -1,6 +1,6 @@
 import datetime
 import torch
-import tqdm
+from tqdm import tqdm
 
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger

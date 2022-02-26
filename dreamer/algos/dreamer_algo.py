@@ -221,12 +221,14 @@ class Dreamer(RlAlgorithm):
         # Actor Loss
 
         # remove gradients from previously calculated tensors
+        '''
         with torch.no_grad():
             if self.use_pcont:
                 # "Last step could be terminal." Done in TF2 code, but unclear why
                 flat_post = buffer_method(post[:-1, :], 'reshape', (batch_t - 1) * (batch_b), -1)
             else:
                 flat_post = buffer_method(post, 'reshape', batch_size, -1)
+        '''
         # Rollout the policy for self.horizon steps. Variable names with imag_ indicate this data is imagined not real.
         # imag_feat shape is [horizon, batch_t * batch_b, feature_size]
         '''
