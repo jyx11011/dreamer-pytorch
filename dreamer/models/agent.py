@@ -149,7 +149,7 @@ class AtariDreamerModel(AgentModel):
             if num == 0:
                 return None, state
             feat = get_feat(state)
-            actions = self.mpc_planner.get_next_action(state, num=num)
+            actions = self.mpc_planner.get_next_action(feat, num=num)
             return actions, state
         if rand:
             action = torch.randn(*prev_action.shape)

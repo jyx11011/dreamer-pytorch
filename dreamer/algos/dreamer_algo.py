@@ -56,7 +56,7 @@ class Dreamer(RlAlgorithm):
             free_nats=3,
             kl_scale=1,
             type=torch.float,
-            prefill=5000,
+            prefill=1000,
             log_video=True,
             video_every=int(1e1),
             video_summary_t=25,
