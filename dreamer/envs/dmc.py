@@ -51,7 +51,7 @@ class DeepMindControl(Env):
 
     def reset(self):
         time_step = self._env.reset()
-        _ = dict(time_step.observation)
+        self._obs = dict(time_step.observation)
         obs = self.render()
         return obs
 

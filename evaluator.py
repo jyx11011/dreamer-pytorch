@@ -18,7 +18,7 @@ class Evaluator:
         observation = torchify_buffer(self.env.reset())
         action = torch.zeros(1, 1, device=self.agent.device)
         reward = None
-        
+        logger.log("position: "f"{self.env.get_obs()}")
         for t in range(self.T):
             observation = observation.unsqueeze(0)
             action, _ = self.agent.step(observation, action, reward)
@@ -31,7 +31,7 @@ class Evaluator:
 
             observation = torch.tensor(obs)
         
-        logger.log("position: "f"{self.env._env.physics.bounded_position()} and velocity: "f"{self.env._env.physics.velocity()}.")
+        logger.log("position: "f"{self.env.get_obs()}")
 
         
 
