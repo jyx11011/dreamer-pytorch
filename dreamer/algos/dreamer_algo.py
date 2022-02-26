@@ -27,7 +27,7 @@ class Dreamer(RlAlgorithm):
     def __init__(
             self,  
             evaluator,
-            evaluate_every=1000,
+            evaluate_every=10000,
             # Hyper-parameters
             batch_size=50,
             batch_length=50,
@@ -56,7 +56,7 @@ class Dreamer(RlAlgorithm):
             free_nats=3,
             kl_scale=1,
             type=torch.float,
-            prefill=1000,
+            prefill=5000,
             log_video=True,
             video_every=int(1e1),
             video_summary_t=25,
@@ -132,7 +132,7 @@ class Dreamer(RlAlgorithm):
             return opt_info
         if itr % self.train_every != 0:
             return opt_info
-        for i in tqdm(range(self.train_steps), desc='Imagination'):
+        for i in tqdm(range(self.train_steps), desc='Training'):
 
             samples_from_replay = self.replay_buffer.sample_batch(self._batch_size, self.batch_length)
             buffed_samples = buffer_to(samples_from_replay, self.agent.device)
