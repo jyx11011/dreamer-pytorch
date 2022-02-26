@@ -156,10 +156,9 @@ class Dreamer(RlAlgorithm):
                 if hasattr(opt_info, field):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
+        self.agent.model.update_mpc_planner()
         if itr % self.evaluate_every == 0:
             self.evaluator.ctr(itr)
-        else:
-            self.agent.model.update_mpc_planner()
         return opt_info
 
     def loss(self, samples: SamplesFromReplay, sample_itr: int, opt_itr: int):

@@ -82,7 +82,6 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
     def reset(self):
         super().reset()
-        self.model.update_mpc_planner()
         self.eval_buffer_size = eval_buffer_size
         self.eval_action_buffer = None
         self.cnt = 0
