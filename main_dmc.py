@@ -42,7 +42,8 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
     )
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
-                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, sample_rand=sample_rand)
+                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, 
+                              model_kwargs={"cuda_idx": cuda_idx})
     
     evaluator=Evaluator(agent, factory_method(name=game))
     algo = Dreamer(evaluator, initial_optim_state_dict=optimizer_state_dict)  # Run with defaults.
