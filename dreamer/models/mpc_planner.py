@@ -32,8 +32,8 @@ class MPC_planner:
         self._iter = iter
         self._nx = nx
         self._nu = nu
-        self._action_low = action_low.item()
-        self._action_high = action_high.item()
+        self._action_low = action_low
+        self._action_high = action_high
         self._dtype=torch.float
 
         if goal_weights is None:
