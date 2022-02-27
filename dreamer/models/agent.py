@@ -52,6 +52,10 @@ class AgentModel(nn.Module):
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
         self.goal_state = self.goal_state.cuda()
+        self._mode='sample'
+
+    def set_mode(mode):
+        self._mode=mode
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,
             rand=False, num=None):
@@ -60,7 +64,7 @@ class AgentModel(nn.Module):
             if num == 0:
                 return None, state
             feat = get_feat(state)
-            actions = self.mpc_planner.get_next_action(feat, num=num)
+            actions = self.mpc_planner.get_next_action(feat, num=num, mode=self._mode)
             return actions, state
         if rand:
             action = torch.randn(*prev_action.shape)
