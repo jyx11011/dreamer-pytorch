@@ -10,6 +10,7 @@ from dreamer.envs.dmc import DeepMindControl
 from dreamer.envs.time_limit import TimeLimit
 from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
+from dreamer.envs.wrapper import make_wapper
 
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
@@ -52,7 +53,6 @@ def eval(load_model_path, game="cartpole_balance",itr=10):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
-
     action_repeat = 2
     factory_method = make_wapper(
         DeepMindControl,
@@ -61,8 +61,9 @@ def eval(load_model_path, game="cartpole_balance",itr=10):
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict)
-    
-    evaluator=Evaluator(agent, factory_method(name=game))
+    env=factory_method(name=game)
+    agent.initialize(env.spaces)
+    evaluator=Evaluator(agent, env)
     
     for i in tqdm(range(itr)):
         evaluator.ctrl(i)
@@ -89,6 +90,7 @@ if __name__ == "__main__":
     print(f'Using run id = {i}')
     args.run_ID = i
     eval(
-        game=args.game,
+        args.load_model_path,
+        game=args.game
         )
 

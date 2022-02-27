@@ -16,15 +16,15 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=8,
-            deterministic_size=50,
-            hidden_size=50,
+            stochastic_size=30,
+            deterministic_size=200,
+            hidden_size=200,
             image_shape=(3, 64, 64),
             action_dist='one_hot',
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=8,
-            pcont_hidden=50,
+            pcont_layers=30,
+            pcont_hidden=200,
             **kwargs,
     ):
         super().__init__()
@@ -51,10 +51,9 @@ class AgentModel(nn.Module):
         self.deterministic_size = deterministic_size
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
-        self.goal_state = self.goal_state.cuda()
         self._mode='sample'
 
-    def set_mode(mode):
+    def set_mode(self,mode):
         self._mode=mode
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,
