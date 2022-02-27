@@ -75,11 +75,16 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
     def sample_mode(self, itr):
         super().sample_mode(itr)
+        self.model.set_mode("sample")
         self._itr=itr
         if itr%1000==0:
             self.sample_rand=self.sample_rand-1.0/1000
             if self.sample_rand<self.rand_min:
                 self.sample_rand = self.rand_min
+
+    def eval_mode(self, itr):
+        super().eval_mode(itr)
+        self.model.set_mode("eval")
 
     def reset(self):
         super().reset()
