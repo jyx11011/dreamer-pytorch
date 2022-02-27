@@ -43,8 +43,7 @@ class AgentModel(nn.Module):
         self.action_dist = action_dist
         self.dtype = dtype
         
-        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition, 
-                action_low = kwargs['action_low'], action_high = kwargs['action_high'])
+        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
         self.goal_state = load_goal_state(dtype)
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
@@ -66,7 +65,7 @@ class AgentModel(nn.Module):
             actions = self.mpc_planner.get_next_action(feat, num=num, mode=self._mode)
             return actions, state
         if rand:
-            action = torch.randn(*prev_action.shape)
+            action = torch.rand(*prev_action.shape) * 2 - 1
         else:
             action = self.policy(state)
         return action, state

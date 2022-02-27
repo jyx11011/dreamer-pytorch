@@ -26,7 +26,7 @@ class MPC_planner:
     def __init__(self, nx, nu, dynamics,
             timesteps=20,
             goal_weights=None, ctrl_penalty=0.001, iter=5,
-            action_low=None, action_high=None):
+            action_low=-1, action_high=1):
         self._timesteps=timesteps
         self._u_init = None
         self._iter = iter
