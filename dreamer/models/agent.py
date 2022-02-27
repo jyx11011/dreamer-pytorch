@@ -53,7 +53,7 @@ class AgentModel(nn.Module):
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
         self._mode='sample'
 
-    def set_mode(mode):
+    def set_mode(self,mode):
         self._mode=mode
 
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None,

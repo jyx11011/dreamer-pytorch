@@ -62,7 +62,7 @@ def eval(load_model_path, game="cartpole_balance",itr=10):
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict)
     env=factory_method(name=game)
-    agent.initialize(env)
+    agent.initialize(env.spaces)
     evaluator=Evaluator(agent, env)
     
     for i in tqdm(range(itr)):
