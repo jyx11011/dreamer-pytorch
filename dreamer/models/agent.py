@@ -52,7 +52,7 @@ class AgentModel(nn.Module):
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
         self._mode='sample'
 
-        if kwargs["cuda_idx"] is not None:
+        if kwargs.get("cuda_idx") is not None:
             self.goal_state = self.goal_state.to('cuda:'+str(kwargs["cuda_idx"]))
 
     def set_mode(self,mode):
