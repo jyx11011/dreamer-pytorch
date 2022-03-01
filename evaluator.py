@@ -37,6 +37,7 @@ class Evaluator:
             observation = observation.unsqueeze(0)
             action, _ = self.agent.step(observation, action, reward)
             act = numpify_buffer(action)[0] 
+            print(action)
             obs, r, d, env_info = self.env.step(action)
             tot+=r
             if d:
@@ -66,7 +67,7 @@ def eval(load_model_path, game="cartpole_balance",itr=10):
     evaluator=Evaluator(agent, env)
     
     for i in tqdm(range(itr)):
-        evaluator.ctrl(i)
+        evaluator.ctrl(i,verbose=True)
 
 
 
