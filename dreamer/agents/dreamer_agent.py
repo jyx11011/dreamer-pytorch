@@ -16,7 +16,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
                  model_kwargs=None, initial_model_state_dict=None, 
-                 sample_rand=1, rand_min=0.8, eval_buffer_size=20):
+                 sample_rand=1, rand_min=0.8, eval_buffer_size=20, sample_buffer_size=50):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
@@ -29,7 +29,8 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         self.rand_min=rand_min
 
         self.eval_buffer_size = eval_buffer_size
-        self.eval_action_buffer = None
+        self.sample_buffer_size = sample_buffer_size
+        self.action_buffer = None
         self.cnt = 0
 
     def make_env_to_model_kwargs(self, env_spaces):
@@ -52,18 +53,31 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         model_inputs = buffer_to((observation, prev_action), device=self.device)
 
         if self._mode == 'eval':
-            if self.eval_action_buffer is None:
-                self.eval_action_buffer, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=self.eval_buffer_size)
+            if self.action_buffer is None:
+                self.action_buffer, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=self.eval_buffer_size)
             else:
                 _, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=0)
-            action = self.eval_action_buffer[self.cnt]
+            action = self.action_buffer[self.cnt]
             self.cnt+=1
             if self.cnt == self.eval_buffer_size:
-                self.eval_action_buffer = None
+                self.action_buffer = None
                 self.cnt = 0
         else:
-            rand=self._itr<=10000 or torch.rand(1)[0]<=self.sample_rand
-            action, state = self.model(*model_inputs, self.prev_rnn_state, rand=rand)
+            if self.action_buffer is None:
+                rand=self._itr<=10000 or torch.rand(1)[0]<=self.sample_rand
+                if rand:
+                    action, state = self.model(*model_inputs, self.prev_rnn_state, rand=rand)
+                else:
+                    self.action_buffer, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=self.sample_buffer_size)
+                    action = self.action_buffer[0]
+                    self.cnt=1
+            else:
+                 _, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=0)
+                 action = self.action_buffer[self.cnt]
+                 self.cnt+=1
+                 if self.cnt == self.sample_buffer_size:
+                    self.action_buffer = None
+                    self.cnt = 0
 
 
         # Model handles None, but Buffer does not, make zeros if needed:
@@ -88,7 +102,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
 
     def reset(self):
         super().reset()
-        self.eval_action_buffer = None
+        self.action_buffer = None
         self.cnt = 0
         self.model.update_mpc_planner()
 
