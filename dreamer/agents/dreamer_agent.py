@@ -62,7 +62,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                 self.eval_action_buffer = None
                 self.cnt = 0
         else:
-            rand=self._itr<=5000 or torch.rand(1)[0]<=self.sample_rand
+            rand=self._itr<=10000 or torch.rand(1)[0]<=self.sample_rand
             action, state = self.model(*model_inputs, self.prev_rnn_state, rand=rand)
 
 
