@@ -55,7 +55,9 @@ class MPC_planner:
         self._Q=self._Q.to(state.device)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
-        self._dynamics=self._dynamics.to(state.device)
+    
+    def reset(self):
+        self._u_init = None
 
     def get_next_action(self, state, num=1, mode='sample'):
         if num > self._timesteps:
