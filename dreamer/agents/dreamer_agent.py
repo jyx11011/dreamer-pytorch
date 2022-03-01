@@ -90,6 +90,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         super().reset()
         self.eval_action_buffer = None
         self.cnt = 0
+        self.model.update_mpc_planner()
 
     '''
     @torch.no_grad()
