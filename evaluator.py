@@ -20,6 +20,7 @@ class Evaluator:
         self.env = env
         self.agent = agent
         self.T = T
+        self.dtype=torch.float
 
     def ctrl(self, itr, verbose=False):
         logger.log("\nStart evaluating: "f"{itr}")
@@ -27,7 +28,7 @@ class Evaluator:
         self.agent.eval_mode(itr)
 
         observation = torchify_buffer(self.env.reset())
-        action = torch.zeros(1, 1, device=self.agent.device)
+        action = torch.zeros(1, 1, device=self.agent.device,dtype=self.dtype)
         reward = None
 
         tot=0
@@ -37,7 +38,8 @@ class Evaluator:
             observation = observation.unsqueeze(0)
             action, _ = self.agent.step(observation, action, reward)
             act = numpify_buffer(action)[0] 
-            print(action)
+            if verbose:
+                logger.log(f"{action}")
             obs, r, d, env_info = self.env.step(action)
             tot+=r
             if d:
