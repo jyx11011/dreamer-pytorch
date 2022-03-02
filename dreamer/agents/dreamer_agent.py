@@ -99,6 +99,8 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
     def eval_mode(self, itr):
         super().eval_mode(itr)
         self.model.set_mode("eval")
+        self.action_buffer=None
+        self.cnt=0
 
     def reset(self):
         super().reset()
