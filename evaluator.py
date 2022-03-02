@@ -77,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     
+    parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
         'data',
@@ -92,6 +93,7 @@ if __name__ == "__main__":
     args.run_ID = i
     eval(
         args.load_model_path,
-        game=args.game
+        game=args.game,
+        itr=args.itr
         )
 
