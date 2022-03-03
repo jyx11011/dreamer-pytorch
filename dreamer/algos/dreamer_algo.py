@@ -27,14 +27,14 @@ class Dreamer(RlAlgorithm):
     def __init__(
             self,  
             evaluator,
-            evaluate_every=5000,
+            evaluate_every=10000,
             # Hyper-parameters
             batch_size=50,
             batch_length=50,
             train_every=1000,
             train_steps=100,
             pretrain=100,
-            model_lr=1e-4,
+            model_lr=6e-4,
             grad_clip=100.0,
             dataset_balance=False,
             discount=0.99,

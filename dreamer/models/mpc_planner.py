@@ -25,7 +25,7 @@ class Dynamics(torch.nn.Module):
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
             timesteps=50,
-            goal_weights=None, ctrl_penalty=0.01, iter=100,
+            goal_weights=None, ctrl_penalty=0.01, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -82,8 +82,8 @@ class MPC_planner:
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        #if mode == 'eval':
-        #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
+        if mode == 'eval':
+            self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
 def load_goal_state(dtype):
