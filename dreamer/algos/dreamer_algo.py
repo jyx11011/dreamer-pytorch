@@ -34,11 +34,7 @@ class Dreamer(RlAlgorithm):
             train_every=1000,
             train_steps=100,
             pretrain=100,
-<<<<<<< HEAD
-            model_lr=1e-3,
-=======
             model_lr=6e-4,
->>>>>>> 78882ce3c3c1e610332e788773f35d870be34e29
             grad_clip=100.0,
             dataset_balance=False,
             discount=0.99,
