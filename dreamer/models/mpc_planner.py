@@ -75,7 +75,7 @@ class MPC_planner:
                         n_batch=n_batch,
                         u_init=self._u_init,
                         max_linesearch_iter=10,
-                        linesearch_decay=0.5,
+                        linesearch_decay=0.2,
                         exit_unconverged=False, 
                         detach_unconverged = True, 
                         verbose=0,
