@@ -66,7 +66,8 @@ class MPC_planner:
         n_batch = state.shape[0]
         #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
-        with FreezeParameters([self._dynamics.dynamics]):
+
+        with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low * torch.ones(self._timesteps, n_batch, self._nu,device=state.device), 
                         u_upper=self._action_high * torch.ones(self._timesteps, n_batch, self._nu,device=state.device), 
