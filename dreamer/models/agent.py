@@ -128,11 +128,8 @@ class AgentModel(nn.Module):
 
     def zero_action(self, obs):
         with torch.no_grad():
-            latent = self.representation.initial_state(len(obs), device=obs.device)
-            action = torch.zeros(1,self.action_size, device=obs.device)
-            embed = self.observation_encoder(obs)
-            latent, _ = self.representation(embed, action, latent)
-            feat = get_feat(latent)
+            state = self.get_state_representation(obs)
+            feat = get_feat(state)
         return feat
 
     def update_mpc_planner(self):
