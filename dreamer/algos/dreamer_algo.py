@@ -74,8 +74,7 @@ class Dreamer(RlAlgorithm):
 
         self.optimizer = None
         self.type = type
-        self.evaluator = evaluator
-        self.evaluate_every = evaluate_every
+
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples, world_size=1, rank=0):
         self.agent = agent
