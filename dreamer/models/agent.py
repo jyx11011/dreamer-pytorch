@@ -155,7 +155,7 @@ class AtariDreamerModel(AgentModel):
             actions = self.mpc_planner.get_next_action(feat, num=num)
             return actions, state
         if rand:
-            action = torch.randn(*prev_action.shape)
+            action = torch.rand(*prev_action.shape) * 2 - 1
         else:
             action = self.policy(state)
 
