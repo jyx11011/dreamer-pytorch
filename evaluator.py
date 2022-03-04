@@ -16,7 +16,7 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=500):
+    def __init__(self, agent, env, T=200):
         self.env = env
         self.agent = agent
         self.T = T
@@ -50,7 +50,7 @@ class Evaluator:
 
         
 
-def eval(load_model_path, game="cartpole_balance",itr=10):
+def eval(load_model_path, game="cartpole_balance",itr=1):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
@@ -96,4 +96,4 @@ if __name__ == "__main__":
         game=args.game,
         itr=args.itr
         )
-
+ 
