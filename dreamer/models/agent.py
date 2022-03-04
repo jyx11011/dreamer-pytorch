@@ -39,7 +39,6 @@ class AgentModel(nn.Module):
         self.rollout = RSSMRollout(self.representation, self.transition)
         feature_size = stochastic_size + deterministic_size
         self.action_size = output_size
-        self.action_dist = action_dist
         self.dtype = dtype
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
