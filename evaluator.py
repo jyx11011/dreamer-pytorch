@@ -26,7 +26,7 @@ class Evaluator:
         self.agent.reset()
         self.agent.eval_mode(itr)
 
-        observation = torchify_buffer(self.env.reset())
+        observation = torchify_buffer(self.env.reset()).type(torch.float) / 255.0 - 0.5
         action = torch.zeros(1, 1, device=self.agent.device)
         reward = None
 
@@ -44,9 +44,29 @@ class Evaluator:
                 logger.log("Done in " f"{t} steps.")
                 break
 
-            observation = torch.tensor(obs)
+            observation = torch.tensor(obs).type(torch.float) / 255.0 - 0.5
 
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
+
+
+    def eval_model(self, T=100):
+        model = self.agent.model
+        logger.log("\nStart evaluating model")
+        self.env.reset()
+        observations = []
+        action = torch.rand(T) * 2 - 1
+        for i in range(T):
+            obs, r, d, env_info = self.env.step(action)
+            observations.append(obs)
+        observations = torch.stack(observations, dim=0)
+        observations = observations.type(torch.float) / 255.0 - 0.5
+        embed = model.observation_encoder(observation)
+        prev_state = model.representation.initial_state(1)
+        prior, post = model.rollout.rollout_representation(t, embed, action, prev_state)
+
+
+
+
 
         
 
