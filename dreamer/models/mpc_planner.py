@@ -79,7 +79,6 @@ class MPC_planner:
                         verbose=1,
                         eps=1e-2,
 			delta_u=0.01,
-                        #slew_rate_penalty=0.001,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
@@ -87,8 +86,6 @@ class MPC_planner:
         #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
-def load_goal_state(dtype):
-    domain = "cartpole"
-    task = "balance"
+def load_goal_state(dtype, domain = "cartpole", task = "balance"):
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
     return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
