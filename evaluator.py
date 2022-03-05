@@ -45,7 +45,7 @@ class Evaluator:
                 logger.log("Done in " f"{t} steps.")
                 break
 
-            observation = torch.tensor(obs).type(torch.float) / 255.0 - 0.5
+            observation = torch.tensor(obs).type(torch.float)
 
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
