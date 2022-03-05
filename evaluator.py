@@ -61,12 +61,14 @@ class Evaluator:
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
         observations = observations.type(torch.float) / 255.0 - 0.5
         
-	embed = model.observation_encoder(observations)
-        prev_state = model.representation.initial_state(1)
-        prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
-        feat = get_feat(post)
-        image_pred = model.observation_decoder(feat)
+        with torch.no_grad():
+            embed = model.observation_encoder(observations)
+            prev_state = model.representation.initial_state(1)
+            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
+            feat = get_feat(post)
+            image_pred = model.observation_decoder(feat)
         print(observations-image_pred.mean)
+        print(image_pred.variance)
         '''
         for i in range(T):
             print(i)
