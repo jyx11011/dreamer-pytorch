@@ -140,6 +140,7 @@ class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
             rand = False, num = None):
         lead_dim, T, B, img_shape = infer_leading_dims(observation, 3)
+        print(T,B,img_shape)
         observation = observation.reshape(T * B, *img_shape).type(self.dtype) / 255.0 - 0.5
         prev_action = prev_action.reshape(T * B, -1).to(self.dtype)
         if prev_state is None:

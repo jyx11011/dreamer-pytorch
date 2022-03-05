@@ -27,7 +27,7 @@ class Evaluator:
         self.agent.reset()
         self.agent.eval_mode(itr)
 
-        observation = torchify_buffer(self.env.reset()).type(torch.float) / 255.0 - 0.5
+        observation = torchify_buffer(self.env.reset()).type(torch.float)
         action = torch.zeros(1, 1, device=self.agent.device)
         reward = None
 
@@ -35,7 +35,7 @@ class Evaluator:
         for t in tqdm(range(self.T), desc='mpc'):
             if verbose:
                 logger.log("position: "f"{self.env.get_obs()}")
-            observation = observation.unsqueeze(0).type(torch.float) / 255.0 - 0.5
+            observation = observation.unsqueeze(0).type(torch.float)
             action, _ = self.agent.step(observation, action, reward)
             act = numpify_buffer(action)[0] 
             print(action)
