@@ -87,8 +87,6 @@ class MPC_planner:
         #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
-def load_goal_state(dtype):
-    domain = "cartpole"
-    task = "balance"
+def load_goal_state(dtype, domain = "cartpole", task = "balance"):
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
     return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
