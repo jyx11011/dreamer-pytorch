@@ -44,13 +44,32 @@ class Evaluator:
                 logger.log("Done in " f"{t} steps.")
                 break
 
-            observation = torch.tensor(obs)
+            observation = torch.tensor(obs).type(torch.float) / 255.0 - 0.5
 
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
-        
 
-def eval(load_model_path, game="cartpole_balance",itr=10):
+    def eval_model(self, T=10):
+        model = self.agent.model
+        logger.log("\nStart evaluating model")
+        observations = [self.env.reset()]
+        action = torch.rand(T, 1, 1) * 2 - 1
+        for i in range(T):
+            obs, r, d, env_info = self.env.step(action)
+            observations.append(obs)
+        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
+        observations = observations.type(torch.float) / 255.0 - 0.5
+        embed = model.observation_encoder(observation)
+        prev_state = model.representation.initial_state(1)
+        prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
+        feat = get_feat(post)
+        image_pred = model.observation_decoder(feat)
+
+        for i in range(T):
+            print(i)
+            print(observations[i], image_pred[i])        
+
+def eval(load_model_path, game="cartpole_balance",itr=10, eval_model=False):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
@@ -66,9 +85,11 @@ def eval(load_model_path, game="cartpole_balance",itr=10):
     agent.initialize(env.spaces)
     evaluator=Evaluator(agent, env)
     
-    for i in tqdm(range(itr)):
-        evaluator.ctrl(i,verbose=True)
-
+    if eval_model:
+        evaluator.eval_model()
+    else:
+        for i in tqdm(range(itr)):
+            evaluator.ctrl(i,verbose=True)
 
 
 if __name__ == "__main__":
@@ -76,7 +97,9 @@ if __name__ == "__main__":
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
-    
+    parser.add_argument('--model', help='evaluate model', type=bool, default=False)
+
+
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
@@ -86,14 +109,18 @@ if __name__ == "__main__":
     parser.add_argument('--log-dir', type=str, default=default_log_dir)
     args = parser.parse_args()
     log_dir = os.path.abspath(args.log_dir)
+    '''
     i = args.run_ID
+    
     while os.path.exists(os.path.join(log_dir, 'run_' + str(i))):
         i += 1
     print(f'Using run id = {i}')
     args.run_ID = i
+    '''
     eval(
         args.load_model_path,
         game=args.game,
-        itr=args.itr
+        itr=args.itr,
+        eval_model=args.model
         )
 
