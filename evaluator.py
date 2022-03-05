@@ -11,6 +11,7 @@ from dreamer.envs.time_limit import TimeLimit
 from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
+from dreamer.models.rnns import get_feat
 
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
@@ -52,22 +53,25 @@ class Evaluator:
     def eval_model(self, T=10):
         model = self.agent.model
         logger.log("\nStart evaluating model")
-        observations = [self.env.reset()]
+        observations = [torch.tensor(self.env.reset())]
         action = torch.rand(T, 1, 1) * 2 - 1
         for i in range(T):
-            obs, r, d, env_info = self.env.step(action)
-            observations.append(obs)
+            obs, r, d, env_info = self.env.step(action[i][0][0])
+            observations.append(torch.tensor(obs))
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
         observations = observations.type(torch.float) / 255.0 - 0.5
-        embed = model.observation_encoder(observation)
+        
+	embed = model.observation_encoder(observations)
         prev_state = model.representation.initial_state(1)
         prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
         feat = get_feat(post)
         image_pred = model.observation_decoder(feat)
-
+        print(observations-image_pred.mean)
+        '''
         for i in range(T):
             print(i)
             print(observations[i], image_pred[i])        
+        '''
 
 def eval(load_model_path, game="cartpole_balance",itr=10, eval_model=False):
     params = torch.load(load_model_path) if load_model_path else {}
@@ -97,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
-    parser.add_argument('--model', help='evaluate model', type=bool, default=False)
+    parser.add_argument('--model', help='evaluate model', action='store_true')
 
 
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
