@@ -68,7 +68,6 @@ class Evaluator:
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
         print(observations-image_pred.mean)
-        print(image_pred.variance)
         '''
         for i in range(T):
             print(i)
