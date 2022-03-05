@@ -16,14 +16,14 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=5,
-            deterministic_size=20,
-            hidden_size=20,
+            stochastic_size=3,
+            deterministic_size=10,
+            hidden_size=10,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=5,
-            pcont_hidden=20,
+            pcont_layers=3,
+            pcont_hidden=10,
             **kwargs,
     ):
         super().__init__()
