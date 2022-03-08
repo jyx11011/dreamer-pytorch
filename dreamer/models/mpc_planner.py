@@ -21,6 +21,15 @@ class Dynamics(torch.nn.Module):
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
 
+class PendulumCost(torch.nn.Module):
+    def __init__(self, goal_state):
+        super().__init__()
+        self._goal_state = goal_state
+
+    def forward(self, state):
+        s = state[:,:-1]
+        u = state[:,-1:]
+        return torch.mul(s - self._goal_state, s - self._goal_state) + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
@@ -47,13 +56,7 @@ class MPC_planner:
         self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
-        goal_state = torch.clone(state)[0]
-        self._goal_weights=self._goal_weights.to(state.device)
-        px = -torch.sqrt(self._goal_weights) * goal_state
-        p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
-        p = p.repeat(self._timesteps, 1)
-        self._Q=self._Q.to(state.device)
-        self._cost = mpc.QuadCost(self._Q, p)
+        self._cost = PendulumCost(state)
         self._u_init = None
     
     def reset(self):
