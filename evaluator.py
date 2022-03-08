@@ -78,7 +78,7 @@ def eval(load_model_path, game="cartpole_balance",itr=10, eval_model=None):
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
-    action_repeat = 2
+    action_repeat = 5
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
