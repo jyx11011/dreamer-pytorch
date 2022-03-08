@@ -6,6 +6,7 @@ from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.tensor import infer_leading_dims, restore_leading_dims, to_onehot, from_onehot
 
 from dreamer.models.observation import ObservationDecoder, ObservationEncoder
+from dreamer.models.dense import DenseModel
 from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, RSSMRollout, get_feat
 
 from dreamer.models.mpc_planner import MPC_planner, load_goal_state
@@ -24,6 +25,9 @@ class AgentModel(nn.Module):
             use_pcont=False,
             pcont_layers=3,
             pcont_hidden=10,
+            reward_shape=(1,),
+            reward_layers=3,
+            reward_hidden=300,
             **kwargs,
     ):
         super().__init__()
@@ -37,6 +41,7 @@ class AgentModel(nn.Module):
         self.representation = RSSMRepresentation(self.transition, encoder_embed_size, output_size, stochastic_size,
                                                  deterministic_size, hidden_size)
         self.rollout = RSSMRollout(self.representation, self.transition)
+        self.reward_model = DenseModel(feature_size, reward_shape, reward_layers, reward_hidden)
         feature_size = stochastic_size + deterministic_size
         self.action_size = output_size
         self.dtype = dtype
@@ -71,7 +76,8 @@ class AgentModel(nn.Module):
             action = torch.rand(*prev_action.shape) * 2 - 1
         else:
             action = self.policy(state)
-        return action, state
+        reward = self.reward_model(get_feat(state))
+        return action, state, reward
 
     def policy(self, state: RSSMState):
         feat = get_feat(state)
