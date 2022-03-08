@@ -17,14 +17,14 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=3,
-            deterministic_size=10,
-            hidden_size=10,
+            stochastic_size=30,
+            deterministic_size=200,
+            hidden_size=200,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=3,
-            pcont_hidden=10,
+            pcont_layers=30,
+            pcont_hidden=200,
             reward_shape=(1,),
             reward_layers=3,
             reward_hidden=300,
@@ -41,8 +41,8 @@ class AgentModel(nn.Module):
         self.representation = RSSMRepresentation(self.transition, encoder_embed_size, output_size, stochastic_size,
                                                  deterministic_size, hidden_size)
         self.rollout = RSSMRollout(self.representation, self.transition)
-        self.reward_model = DenseModel(feature_size, reward_shape, reward_layers, reward_hidden)
         feature_size = stochastic_size + deterministic_size
+        self.reward_model = DenseModel(feature_size, reward_shape, reward_layers, reward_hidden)
         self.action_size = output_size
         self.dtype = dtype
         

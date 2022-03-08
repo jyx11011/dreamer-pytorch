@@ -263,7 +263,7 @@ class Dreamer(RlAlgorithm):
         with torch.no_grad():
             prior_ent = torch.mean(prior_dist.entropy())
             post_ent = torch.mean(post_dist.entropy())
-            loss_info = LossInfo(model_loss, prior_ent, post_ent, div, image_loss,
+            loss_info = LossInfo(model_loss, prior_ent, post_ent, div, reward_loss, image_loss,
                                  pcont_loss)
 
             if self.log_video:
