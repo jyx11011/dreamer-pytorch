@@ -75,6 +75,8 @@ class Evaluator:
         '''
 
 def eval(load_model_path, game="cartpole_balance",itr=10, eval_model=None):
+    domain, task = game.split('_')
+    
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
@@ -85,7 +87,8 @@ def eval(load_model_path, game="cartpole_balance",itr=10, eval_model=None):
         [dict(amount=action_repeat), dict(), dict(duration=1000 / action_repeat)])
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
-                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict)
+                              expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict,
+                               model_kwargs={"domain": domain, "task": task})
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     evaluator=Evaluator(agent, env)

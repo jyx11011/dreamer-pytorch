@@ -21,6 +21,15 @@ class Dynamics(torch.nn.Module):
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
 
+class PendulumCost(torch.nn.Module):
+    def __init__(self, goal_state):
+        super().__init__()
+        self._goal_state = goal_state
+
+    def forward(self, state):
+        s = state[:,:-1]
+        u = state[:,-1:]
+        return torch.mul(s - self._goal_state, s - self._goal_state) + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
@@ -47,13 +56,7 @@ class MPC_planner:
         self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
-        goal_state = torch.clone(state)[0]
-        self._goal_weights=self._goal_weights.to(state.device)
-        px = -torch.sqrt(self._goal_weights) * goal_state
-        p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
-        p = p.repeat(self._timesteps, 1)
-        self._Q=self._Q.to(state.device)
-        self._cost = mpc.QuadCost(self._Q, p)
+        self._cost = PendulumCost(state)
         self._u_init = None
     
     def reset(self):
@@ -79,7 +82,6 @@ class MPC_planner:
                         verbose=1,
                         eps=1e-2,
 			delta_u=0.01,
-                        #slew_rate_penalty=0.001,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
@@ -87,8 +89,6 @@ class MPC_planner:
         #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
-def load_goal_state(dtype):
-    domain = "cartpole"
-    task = "balance"
+def load_goal_state(dtype, domain = "cartpole", task = "balance"):
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
     return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
