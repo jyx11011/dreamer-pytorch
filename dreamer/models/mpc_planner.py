@@ -21,11 +21,21 @@ class Dynamics(torch.nn.Module):
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
 
+class PendulumCost(torch.nn.Module):
+    def __init__(self, reward):
+        super().__init__()
+        self._reward = reward
+
+    def forward(self, state):
+        s = state[:,:-1]
+        u = state[:,-1:][0]
+        sc = self._reward(s)[0]
+        return  -sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
-    def __init__(self, nx, nu, dynamics,
+    def __init__(self, nx, nu, dynamics, reward,
             timesteps=10,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            goal_weights=None, ctrl_penalty=0.001, iter=10,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -45,17 +55,13 @@ class MPC_planner:
         ))
         self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
+        self._cost = PendulumCost(reward)
 
+    '''
     def set_goal_state(self, state):
-        goal_state = torch.clone(state)[0]
-        self._goal_weights=self._goal_weights.to(state.device)
-        px = -torch.sqrt(self._goal_weights) * goal_state
-        p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
-        p = p.repeat(self._timesteps, 1)
-        self._Q=self._Q.to(state.device)
-        self._cost = mpc.QuadCost(self._Q, p)
+        self._cost = PendulumCost(state)
         self._u_init = None
-    
+    '''
     def reset(self):
         self._u_init = None
 
@@ -72,14 +78,12 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=20,
-                        linesearch_decay=0.3,
+                        max_linesearch_iter=10,
+                        linesearch_decay=0.2,
                         exit_unconverged=False, 
                         detach_unconverged = True, 
                         verbose=1,
                         eps=1e-2,
-			delta_u=0.01,
-                        #slew_rate_penalty=0.001,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
