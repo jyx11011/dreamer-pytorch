@@ -45,15 +45,6 @@ class MPC_planner:
         self._action_low = action_low
         self._action_high = action_high
         self._dtype=torch.float
-
-        if goal_weights is None:
-            goal_weights = torch.ones(nx, dtype=self._dtype)
-        self._goal_weights = goal_weights
-        q = torch.cat((
-            goal_weights,
-            ctrl_penalty * torch.ones(nu, dtype=self._dtype)
-        ))
-        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
         self._cost = PendulumCost(reward)
 
@@ -62,6 +53,7 @@ class MPC_planner:
         self._cost = PendulumCost(state)
         self._u_init = None
     '''
+
     def reset(self):
         self._u_init = None
 
