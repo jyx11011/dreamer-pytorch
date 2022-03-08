@@ -9,7 +9,7 @@ from dreamer.models.observation import ObservationDecoder, ObservationEncoder
 from dreamer.models.dense import DenseModel
 from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, RSSMRollout, get_feat
 
-from dreamer.models.mpc_planner import MPC_planner, load_goal_state
+from dreamer.models.mpc_planner import MPC_planner
 
 from dreamer.utils.module import get_parameters, FreezeParameters
 
@@ -54,9 +54,6 @@ class AgentModel(nn.Module):
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
         self._mode='sample'
-
-        if kwargs.get("cuda_idx") is not None:
-            self.goal_state = self.goal_state.to('cuda:'+str(kwargs["cuda_idx"]))
 
     def set_mode(self,mode):
         self._mode=mode
