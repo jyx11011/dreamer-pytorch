@@ -35,7 +35,7 @@ class PendulumCost(torch.nn.Module):
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
             timesteps=10,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            goal_weights=None, ctrl_penalty=0.001, iter=10,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -45,15 +45,6 @@ class MPC_planner:
         self._action_low = action_low
         self._action_high = action_high
         self._dtype=torch.float
-
-        if goal_weights is None:
-            goal_weights = torch.ones(nx, dtype=self._dtype)
-        self._goal_weights = goal_weights
-        q = torch.cat((
-            goal_weights,
-            ctrl_penalty * torch.ones(nu, dtype=self._dtype)
-        ))
-        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
         self._cost = PendulumCost(reward)
 
@@ -62,6 +53,7 @@ class MPC_planner:
         self._cost = PendulumCost(state)
         self._u_init = None
     '''
+
     def reset(self):
         self._u_init = None
 
@@ -78,13 +70,12 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=20,
-                        linesearch_decay=0.3,
+                        max_linesearch_iter=10,
+                        linesearch_decay=0.2,
                         exit_unconverged=False, 
                         detach_unconverged = True, 
                         verbose=1,
                         eps=1e-2,
-			delta_u=0.01,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
