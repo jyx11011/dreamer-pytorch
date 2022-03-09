@@ -111,16 +111,14 @@ class CartpoleDx(torch.nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
         gravity, masscart, masspole, length = torch.unbind(self.params)
-        total_mass = masspole + masscart
         polemass_length = masspole * length
         x, dx, cos_th, sin_th, dth = torch.unbind(state, dim=1)
+        total_mass = masspole + masscart
         th = torch.atan2(sin_th, cos_th)
         u=u[:,0]
-        cart_in = (u + polemass_length * dth**2 * sin_th) / total_mass
-        th_acc = (gravity * sin_th - cos_th * cart_in) / \
-                 (length * (4./3. - masspole * cos_th**2 /
-                                     total_mass))
-        xacc = cart_in - polemass_length * th_acc * cos_th / total_mass
+        th_acc = (-u * cos_th - masspole*length*dth**2*sin_th*cos_th+total_mass*gravity*sin_th)\
+            / length / (masscart + masspole * sin_th**2)
+        xacc = u + polemass *sin_th*(length*dth**2-gravity*cos_th)/(masscart+masspole*sin_th**2)
         x = x + self.dt * dx
         dx = dx + self.dt * xacc
         th = th + self.dt * dth
