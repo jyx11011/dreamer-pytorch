@@ -30,11 +30,11 @@ class PendulumCost(torch.nn.Module):
         s = state[:,:-1]
         u = state[:,-1:][0]
         sc = self._reward(s)[0]
-        return  -sc + 0.001 * torch.mul(u,u)
+        return  -1000*sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
-            timesteps=10,
+            timesteps=40,
             goal_weights=None, ctrl_penalty=0.001, iter=10,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
@@ -73,14 +73,15 @@ class MPC_planner:
                         max_linesearch_iter=10,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
-                        detach_unconverged = True, 
+                        detach_unconverged = False, 
                         verbose=1,
                         eps=1e-2,
+                        #delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        #if mode == 'eval':
-        #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
+        if mode == 'eval':
+            self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
 def load_goal_state(dtype, domain = "cartpole", task = "balance"):
