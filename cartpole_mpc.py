@@ -3,6 +3,9 @@ import os
 import argparse
 import torch
 from tqdm import tqdm
+from torch.autograd import Function, Variable
+import numpy as np
+from mpc import mpc
 
 from dreamer.agents.dmc_dreamer_agent import DMCDreamerAgent
 from dreamer.algos.dreamer_algo import Dreamer
@@ -14,8 +17,8 @@ from dreamer.envs.wrapper import make_wapper
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=20,
-            goal_weights=None, ctrl_penalty=0.001, iter=10,
+            timesteps=10,
+            goal_weights=None, ctrl_penalty=0.001, iter=5,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -66,9 +69,9 @@ class MPC_planner:
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
                         detach_unconverged = False, 
+                        backprop=False,
                         verbose=0,
                         eps=1e-2,
-			            delta_u=0.01,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
@@ -77,7 +80,7 @@ class MPC_planner:
         return action
 
 
-class CartpoleDx(nn.Module):
+class CartpoleDx(torch.nn.Module):
     def __init__(self, params=None):
         super().__init__()
 
@@ -110,18 +113,14 @@ class CartpoleDx(nn.Module):
         gravity, masscart, masspole, length = torch.unbind(self.params)
         total_mass = masspole + masscart
         polemass_length = masspole * length
-
-        u = torch.clamp(u[:,0], -self.force_mag, self.force_mag)
-
         x, dx, cos_th, sin_th, dth = torch.unbind(state, dim=1)
         th = torch.atan2(sin_th, cos_th)
-
+        u=u[:,0]
         cart_in = (u + polemass_length * dth**2 * sin_th) / total_mass
         th_acc = (gravity * sin_th - cos_th * cart_in) / \
                  (length * (4./3. - masspole * cos_th**2 /
                                      total_mass))
         xacc = cart_in - polemass_length * th_acc * cos_th / total_mass
-
         x = x + self.dt * dx
         dx = dx + self.dt * xacc
         th = th + self.dt * dth
@@ -134,7 +133,7 @@ class CartpoleDx(nn.Module):
         return state
 
 
-def ctrl(game='cartpole'):
+def ctrl(game='cartpole_balance'):
     action_repeat=2
     factory_method = make_wapper(
         DeepMindControl,
@@ -153,11 +152,11 @@ def ctrl(game='cartpole'):
     sin=obs['position'][2]
     dx=obs['velocity'][0]
     dth=obs['velocity'][1]
-    state=torch.tensor([[x, dx, cos, sin, dth]])
-
+    state=torch.tensor([[x, dx, cos, sin, dth]], dtype=torch.float)
     tot=0
-    for t in tqdm(range(100), desc='mpc'):
-        print("position: "f"{self.env.get_obs()}, reward: "f"{r}")
+    r=0
+    for t in tqdm(range(500), desc='mpc'):
+        print("position: "f"{env.get_obs()}, reward: "f"{r}")
         action = planner.get_next_action(state, mode='eval')[0].item()
         print(action)
         obs, r, d, env_info = env.step(action)
@@ -171,9 +170,9 @@ def ctrl(game='cartpole'):
         sin=obs['position'][2]
         dx=obs['velocity'][0]
         dth=obs['velocity'][1]
-        state=torch.tensor([[x, dx, cos, sin, dth]])
+        state=torch.tensor([[x, dx, cos, sin, dth]], dtype=torch.float)
     
-    print("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
+    print("position: "f"{env.get_obs()}, reward: "f"{tot}")
 
 if __name__ == "__main__":
     ctrl()
