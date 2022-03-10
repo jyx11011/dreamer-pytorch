@@ -61,14 +61,14 @@ class Evaluator:
         observations = [torch.tensor(self.env.reset())]
         action = torch.rand(T, 1, 1, device=device) * 2 - 1
         for i in range(T):
-            obs, r, d, env_info = self.env.step(action[i][0][0])
+            obs, r, d, env_info = self.env.step(action[i][0][0].item())
             observations.append(torch.tensor(obs))
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1)
+            prev_state = model.representation.initial_state(1).to(device)
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
