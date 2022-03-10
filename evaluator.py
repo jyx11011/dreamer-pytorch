@@ -89,7 +89,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict,
-                               model_kwargs={"domain": domain, "task": task})
+                               model_kwargs={"domain": domain, "task": task, "cuda_idx": cuda_idx})
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
