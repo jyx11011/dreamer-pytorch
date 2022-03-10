@@ -68,7 +68,7 @@ class Evaluator:
         
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1).to(device)
+            prev_state = model.representation.initial_state(1, device=device)
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
