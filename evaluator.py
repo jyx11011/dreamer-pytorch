@@ -61,7 +61,7 @@ class Evaluator:
         observations = [torch.tensor(self.env.reset())]
         action = torch.rand(T, 1, 1, device=device) * 2 - 1
         for i in range(T):
-            obs, r, d, env_info = self.env.step(action[i][0][0])
+            obs, r, d, env_info = self.env.step(action[i][0][0].item())
             observations.append(torch.tensor(obs))
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
