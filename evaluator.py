@@ -55,13 +55,15 @@ class Evaluator:
 
     def eval_model(self, T=10):
         model = self.agent.model
+        device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
+
         logger.log("\nStart evaluating model")
         observations = [torch.tensor(self.env.reset())]
-        action = torch.rand(T, 1, 1) * 2 - 1
+        action = torch.rand(T, 1, 1, device=device) * 2 - 1
         for i in range(T):
             obs, r, d, env_info = self.env.step(action[i][0][0])
             observations.append(torch.tensor(obs))
-        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
+        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         
         with torch.no_grad():
