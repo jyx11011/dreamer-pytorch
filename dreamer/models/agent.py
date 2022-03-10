@@ -20,7 +20,6 @@ class AgentModel(nn.Module):
             deterministic_size=15,
             hidden_size=15,
             image_shape=(3, 64, 64),
-            action_dist='one_hot',
             dtype=torch.float,
             use_pcont=False,
             pcont_layers=5,
@@ -40,7 +39,6 @@ class AgentModel(nn.Module):
         self.rollout = RSSMRollout(self.representation, self.transition)
         feature_size = stochastic_size + deterministic_size
         self.action_size = output_size
-        self.action_dist = action_dist
         self.dtype = dtype
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
@@ -128,18 +126,16 @@ class AgentModel(nn.Module):
 
     def zero_action(self, obs):
         with torch.no_grad():
-            latent = self.representation.initial_state(len(obs), device=obs.device)
-            action = torch.zeros(1,self.action_size, device=obs.device)
-            embed = self.observation_encoder(obs)
-            latent, _ = self.representation(embed, action, latent)
-            feat = get_feat(latent)
+            state = self.get_state_representation(obs)
+            feat = get_feat(state)
         return feat
 
     def update_mpc_planner(self):
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
     def reset(self):
-        self.mpc_planner.reset()
+        self.update_mpc_planner()
+
 
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
@@ -159,7 +155,7 @@ class AtariDreamerModel(AgentModel):
             actions = self.mpc_planner.get_next_action(feat, num=num)
             return actions, state
         if rand:
-            action = torch.randn(*prev_action.shape)
+            action = torch.rand(*prev_action.shape) * 2 - 1
         else:
             action = self.policy(state)
 

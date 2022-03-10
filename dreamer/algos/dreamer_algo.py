@@ -27,7 +27,7 @@ class Dreamer(RlAlgorithm):
     def __init__(
             self,  
             evaluator,
-            evaluate_every=5000,
+            evaluate_every=50000,
             # Hyper-parameters
             batch_size=50,
             batch_length=50,
@@ -74,8 +74,7 @@ class Dreamer(RlAlgorithm):
 
         self.optimizer = None
         self.type = type
-        self.evaluator = evaluator
-        self.evaluate_every = evaluate_every
+
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples, world_size=1, rank=0):
         self.agent = agent
@@ -157,7 +156,7 @@ class Dreamer(RlAlgorithm):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
         self.agent.model.update_mpc_planner()
-        if itr>=10000 and itr % self.evaluate_every == 0:
+        if itr>=100000 and itr % self.evaluate_every == 0:
             self.evaluator.ctrl(itr)
         return opt_info
 
