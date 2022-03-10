@@ -81,7 +81,7 @@ class MPC_planner:
                         backprop=False,
                         verbose=1,
                         eps=1e-5,
-			delta_u=0.5,
+			#delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
