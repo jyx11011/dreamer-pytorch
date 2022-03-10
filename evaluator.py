@@ -56,7 +56,7 @@ class Evaluator:
     def eval_model(self, T=10):
         model = self.agent.model
         self.agent.reset()
-        self.agent.eval_mode(itr)
+        self.agent.eval_mode(0)
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
@@ -69,8 +69,8 @@ class Evaluator:
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action, reward)
-            actions.append(action[0])
+            action, _ = self.agent.step(observation, action.to(device), reward)
+            actions.append(action)
             act = numpify_buffer(action)[0] 
             print(action[0])
             obs, r, d, env_info = self.env.step(action)
@@ -80,11 +80,10 @@ class Evaluator:
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
-
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
+            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
         print(observations-image_pred.mean)
