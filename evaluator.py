@@ -17,25 +17,27 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=100):
+    def __init__(self, agent, env, T=100, cuda_idx=None):
         self.env = env
         self.agent = agent
         self.T = T
+        self.cuda_idx = cuda_idx
 
     def ctrl(self, itr, verbose=False):
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
+        device = torch.device("cuda: " + str(cuda_idx)) if cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
-        action = torch.zeros(1, 1, device=self.agent.device)
+        action = torch.zeros(1, 1, device=self.agent.device).to(device)
         reward = None
 
         tot=0
         for t in tqdm(range(self.T), desc='mpc'):
             if verbose:
                 logger.log("position: "f"{self.env.get_obs()}")
-            observation = observation.unsqueeze(0).type(torch.float)
+            observation = observation.unsqueeze(0).type(torch.float).to(device)
             action, _ = self.agent.step(observation, action, reward)
             act = numpify_buffer(action)[0] 
             print(action)
@@ -93,7 +95,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    evaluator=Evaluator(agent, env)
+    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx)
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
