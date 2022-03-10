@@ -49,7 +49,8 @@ class Evaluator:
             if verbose:
                 print(r)
             observation = torch.tensor(obs).type(torch.float)
-
+            if (t+1)%10 == 0:
+                print(t)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
