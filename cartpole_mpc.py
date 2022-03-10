@@ -17,8 +17,8 @@ from dreamer.envs.wrapper import make_wapper
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=10,
-            goal_weights=None, ctrl_penalty=0.001, iter=5,
+            timesteps=50,
+            goal_weights=None, ctrl_penalty=0.001, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -40,7 +40,7 @@ class MPC_planner:
         self._dynamics = dynamics
 
     def set_goal_state(self, state):
-        goal_state = torch.clone(state)[0]
+        goal_state = torch.clone(state)
         self._goal_weights=self._goal_weights.to(state.device)
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
@@ -56,7 +56,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        if self._u_init is None:
+            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
@@ -65,18 +66,18 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=10,
+                        max_linesearch_iter=20,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
-                        detach_unconverged = False, 
                         backprop=False,
                         verbose=0,
-                        eps=1e-2,
+                        delta_u=0.5,
+                        eps=1e-5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        if mode == 'eval':
-            self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
+        #if mode == 'eval':
+        #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
         return action
 
 
@@ -103,7 +104,7 @@ class CartpoleDx(torch.nn.Module):
         self.ctrl_penalty = 0.001
 
         self.mpc_eps = 1e-4
-        self.linesearch_decay = 0.5
+        self.linesearch_decay = 0.2
         self.max_linesearch_iter = 10
 
     def forward(self, state, u):
@@ -118,12 +119,11 @@ class CartpoleDx(torch.nn.Module):
         u=u[:,0]
         th_acc = (-u * cos_th - masspole*length*dth**2*sin_th*cos_th+total_mass*gravity*sin_th)\
             / length / (masscart + masspole * sin_th**2)
-        xacc = u + polemass *sin_th*(length*dth**2-gravity*cos_th)/(masscart+masspole*sin_th**2)
+        xacc = (u + masspole *sin_th*(length*dth**2-gravity*cos_th))/(masscart+masspole*sin_th**2)
         x = x + self.dt * dx
         dx = dx + self.dt * xacc
         th = th + self.dt * dth
         dth = dth + self.dt * th_acc
-
         state = torch.stack((
             x, dx, torch.cos(th), torch.sin(th), dth
         ), 1)
@@ -153,11 +153,13 @@ def ctrl(game='cartpole_balance'):
     state=torch.tensor([[x, dx, cos, sin, dth]], dtype=torch.float)
     tot=0
     r=0
+    #actions = planner.get_next_action(state, mode='eval',num=50)
     for t in tqdm(range(500), desc='mpc'):
         print("position: "f"{env.get_obs()}, reward: "f"{r}")
-        action = planner.get_next_action(state, mode='eval')[0].item()
+        action = planner.get_next_action(state, mode='eval')
         print(action)
-        obs, r, d, env_info = env.step(action)
+        print(cartpole(state, action[0]))
+        obs, r, d, env_info = env.step(action[0].item())
         tot+=r
         if d:
             print("Done in " f"{t} steps.")
@@ -174,4 +176,4 @@ def ctrl(game='cartpole_balance'):
 
 if __name__ == "__main__":
     ctrl()
-    
+
