@@ -55,19 +55,35 @@ class Evaluator:
 
     def eval_model(self, T=10):
         model = self.agent.model
+        self.agent.reset()
+        self.agent.eval_mode(0)
+        device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
+
         logger.log("\nStart evaluating model")
-        observations = [torch.tensor(self.env.reset())]
-        action = torch.rand(T, 1, 1) * 2 - 1
-        for i in range(T):
-            obs, r, d, env_info = self.env.step(action[i][0][0])
-            observations.append(torch.tensor(obs))
-        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
+
+        observation = torchify_buffer(self.env.reset()).type(torch.float)
+        observations = [observation]
+        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        reward = None
+        actions = []
+        tot=0
+        for t in range(T):
+            observation = observation.unsqueeze(0).to(device)
+            action, _ = self.agent.step(observation, action.to(device), reward)
+            actions.append(action)
+            act = numpify_buffer(action)[0] 
+            print(action[0])
+            obs, r, d, env_info = self.env.step(action)
+            observation = torch.tensor(obs).type(torch.float)
+            observations.append(observation)
+
+        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
-        
+        actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1)
-            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
+            prev_state = model.representation.initial_state(1, device=device)
+            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
         print(observations-image_pred.mean)
@@ -135,4 +151,4 @@ if __name__ == "__main__":
         itr=args.itr,
         eval_model=args.model
         )
-
+ 
