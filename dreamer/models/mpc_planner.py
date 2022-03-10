@@ -78,9 +78,9 @@ class MPC_planner:
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
                         detach_unconverged = True, 
-                        verbose=0,
-                        eps=1e-2,
-                        delta_u=0.1,
+                        verbose=1,
+                        eps=1e-5,
+                        delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
