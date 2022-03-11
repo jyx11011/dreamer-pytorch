@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from dreamer.agents.dmc_dreamer_agent import DMCDreamerAgent
 from dreamer.algos.dreamer_algo import Dreamer
-from dreamer.envs.dmc import DeepMindControl
+from dreamer.envs.box import Box
 from dreamer.envs.time_limit import TimeLimit
 from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
@@ -102,7 +102,7 @@ def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None):
     optimizer_state_dict = params.get('optimizer_state_dict')
     action_repeat = 2
     factory_method = make_wapper(
-        DeepMindControl,
+        Box,
         [ActionRepeat, NormalizeActions, TimeLimit],
         [dict(amount=action_repeat), dict(), dict(duration=1000 / action_repeat)])
 
