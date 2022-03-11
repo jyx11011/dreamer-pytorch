@@ -25,7 +25,7 @@ class Box(Env):
 
     def __init__(self, size=(64, 64)):
         f=open("dreamer/envs/box.xml","r")
-        MODEL_XML = f.read().format(bx=1)#np.random.randn())
+        MODEL_XML = f.read()
         self.physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
         self._size = size
         camera = 0
@@ -53,7 +53,8 @@ class Box(Env):
         return EnvStep(obs, reward, done, info)
 
     def reset(self):
-        self.physics.reset_context()
+        with self.physics.reset_context(): 
+            physics.named.data.qpos['slider'] = np.random.rand()
         self._obs=self.physics.box_position()
         obs = self.render()
         return obs

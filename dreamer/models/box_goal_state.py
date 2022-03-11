@@ -9,8 +9,10 @@ from dreamer.envs.box import Physics
 
 
 def goal_obs():
-    f=open("dreamer/envs/box_goal.xml","r")
+    f=open("dreamer/envs/box.xml","r")
     MODEL_XML = f.read()
     physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
-    print("goal:", physics.named.data.qpos['slider'])
+    with self.physics.reset_context(): 
+        physics.named.data.qpos['slider'] = 2
+    print("goal:", physics.box_position())
     return physics.render(64, 64, camera_id=0).transpose(2, 0, 1).copy()
