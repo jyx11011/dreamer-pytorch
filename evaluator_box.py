@@ -63,13 +63,14 @@ class Evaluator:
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        action = torch.zeros(1, 1).to(device)
         reward = None
         actions = []
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
+            #action, _ = self.agent.step(observation, action.to(device), reward)
+            action = torch.rand(1,1)-1
             actions.append(action)
             act = numpify_buffer(action)[0] 
             print(action[0])

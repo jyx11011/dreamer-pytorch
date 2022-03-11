@@ -9,7 +9,8 @@ from dreamer.envs.box import Physics
 
 
 def goal_obs():
-    f=open("dreamer/envs/box.xml","r")
+    f=open("dreamer/envs/box_goal.xml","r")
     MODEL_XML = f.read()
     physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
+    print(physics.box_position())
     return physics.render(64, 64, camera_id=0).transpose(2, 0, 1).copy()
