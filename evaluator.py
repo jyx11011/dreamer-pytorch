@@ -57,6 +57,7 @@ class Evaluator:
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
+        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
