@@ -139,6 +139,7 @@ class AgentModel(nn.Module):
     def reset(self):
         self.mpc_planner.reset()
 
+
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
             rand = False, num = None):
