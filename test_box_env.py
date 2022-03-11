@@ -1,8 +1,7 @@
-from mujoco_py import load_model_from_xml, MjSim, MjViewer
 import math
 import os
 import numpy as np
-from box import Box
+from dreamer.envs.box import Box
 
 
 def test_mujoco():
