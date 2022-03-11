@@ -24,8 +24,9 @@ class Physics(mujoco.Physics):
 class Box(Env):
 
     def __init__(self, size=(64, 64)):
-
-        self.physics = Physics.from_xml_string(common.read_model('dreamer/envs/box.xml'), common.ASSETS)
+        f=open("dreamer/envs/box.xml","r")
+        MODEL_XML = f.read()
+        self.physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
         self._size = size
         camera = 0
         self._camera = camera
