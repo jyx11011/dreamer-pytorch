@@ -47,8 +47,6 @@ class Evaluator:
             if d:
                 logger.log("Done in " f"{t} steps.")
                 break
-            if verbose:
-                print(r)
             observation = torch.tensor(obs).type(torch.float)
 
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")

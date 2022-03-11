@@ -25,7 +25,7 @@ class Box(Env):
 
     def __init__(self, size=(64, 64)):
         f=open("dreamer/envs/box.xml","r")
-        MODEL_XML = f.read()
+        MODEL_XML = f.read().format(bx=np.random.randn())
         self.physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
         self._size = size
         camera = 0
@@ -54,6 +54,7 @@ class Box(Env):
 
     def reset(self):
         self.physics.reset_context()
+        self._obs=self.physics.box_position()
         obs = self.render()
         return obs
 
