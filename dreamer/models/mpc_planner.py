@@ -25,7 +25,7 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=50,
+            timesteps=100,
             goal_weights=None, ctrl_penalty=0.001, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
@@ -79,7 +79,7 @@ class MPC_planner:
                         max_linesearch_iter=30,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
-                        detach_unconverged = False, 
+                        #detach_unconverged = False, 
                         verbose=1,
                         eps=1e-5,
                         #delta_u=0.5,
