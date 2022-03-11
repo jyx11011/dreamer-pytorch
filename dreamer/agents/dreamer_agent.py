@@ -33,10 +33,6 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         self.action_buffer = None
         self.cnt = 0
 
-    def make_env_to_model_kwargs(self, env_spaces):
-        """Generate any keyword args to the model which depend on environment interfaces."""
-        return dict(action_size=env_spaces.action.shape[0])
-
     def __call__(self, observation, prev_action, init_rnn_state):
         model_inputs = buffer_to((observation, prev_action, init_rnn_state), device=self.device)
         return self.model(*model_inputs)

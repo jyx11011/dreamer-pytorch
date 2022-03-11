@@ -15,7 +15,7 @@ from dreamer.utils.module import get_parameters, FreezeParameters
 class AgentModel(nn.Module):
     def __init__(
             self,
-            action_shape,
+            action_shape=(1,),
             stochastic_size=1,
             deterministic_size=1,
             hidden_size=1,
