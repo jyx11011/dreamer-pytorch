@@ -66,7 +66,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        self._u_init = torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
+        if self._u_init is None:
+            self._u_init = torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -76,18 +77,18 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=30,
+                        max_linesearch_iter=50,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
                         #detach_unconverged = False, 
                         verbose=1,
-                        eps=1e-5,
+                        eps=1e-2,
                         #delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        #if mode == 'eval':
-            #self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
+        if mode == 'eval':
+            self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
         return action
 
 def load_goal_state(dtype):
