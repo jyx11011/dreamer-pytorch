@@ -31,8 +31,8 @@ def build_and_train(log_dir, game='box', run_ID=0, cuda_idx=None, eval=False, sa
     sampler = SerialSampler(
         EnvCls=factory_method,
         TrajInfoCls=TrajInfo,
-        env_kwargs=dict(name=game),
-        eval_env_kwargs=dict(name=game),
+        env_kwargs=dict(),
+        eval_env_kwargs=dict(),
         batch_T=1,
         batch_B=1,
         max_decorrelation_steps=0,
