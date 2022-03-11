@@ -25,7 +25,7 @@ class Box(Env):
 
     def __init__(self, size=(64, 64)):
         f=open("dreamer/envs/box.xml","r")
-        MODEL_XML = f.read().format(bx=np.random.randn())
+        MODEL_XML = f.read().format(bx=1)#np.random.randn())
         self.physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
         self._size = size
         camera = 0

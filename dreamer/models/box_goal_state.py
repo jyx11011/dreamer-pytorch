@@ -12,5 +12,5 @@ def goal_obs():
     f=open("dreamer/envs/box_goal.xml","r")
     MODEL_XML = f.read()
     physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)
-    print(physics.box_position())
+    print("goal:", physics.named.data.qpos['slider'])
     return physics.render(64, 64, camera_id=0).transpose(2, 0, 1).copy()
