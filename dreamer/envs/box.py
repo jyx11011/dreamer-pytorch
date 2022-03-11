@@ -54,7 +54,7 @@ class Box(Env):
 
     def reset(self):
         with self.physics.reset_context(): 
-            physics.named.data.qpos['slider'] = np.random.rand()
+            self.physics.named.data.qpos['slider'] = np.random.rand()
         self._obs=self.physics.box_position()
         obs = self.render()
         return obs
