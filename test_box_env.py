@@ -19,7 +19,8 @@ def test_env():
     env=Box()
     env.reset()
     for i in range(10):
-        env.step(1)
+        env.step(-1)
+        print(env.get_obs())
     
 if __name__=="__main__":
     test_env()

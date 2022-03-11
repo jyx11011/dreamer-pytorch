@@ -53,7 +53,7 @@ class Box(Env):
         return EnvStep(obs, reward, done, info)
 
     def reset(self):
-        self._physics.reset_context()
+        self.physics.reset_context()
         obs = self.render()
         return obs
 
