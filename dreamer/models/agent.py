@@ -128,7 +128,7 @@ class AgentModel(nn.Module):
         with torch.no_grad():
             state = self.get_state_representation(obs)
             feat = get_feat(state)
-            print("goal_pred:",torch.sum(torch.where(torch.abs(obs-self.observation_decoder(feat).mean)>=0.1, 1, 0)))
+            print("goal_pred:",torch.sum(torch.where(torch.abs(obs-self.observation_decoder(feat).mean)>=0.01, 1, 0)))
         return feat
 
     def update_mpc_planner(self):
