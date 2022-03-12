@@ -138,12 +138,15 @@ class Evaluator:
             print(observations[i], image_pred[i])        
         '''
 
-    def eval_cost(goal=0.24):
-        goal = goal_obs(goal)
+    def eval_cost(self, goal=0.24):
+        dtype=torch.float
+        g=goal
+        goal = torch.tensor(goal_obs(goal) / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
         goal_feat = self.agent.model.zero_action(goal)
-        x=goal-1
-        while(x<goal+1):
-            feat=self.agent.model.zero_action(goal_obs(x))
+        x=g-1
+        while x<g+1:
+            state=torch.tensor(goal_obs(x) / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
+            feat=self.agent.model.zero_action(state)
             print(torch.sum((feat-goal_feat)*(feat-goal_feat)))
             x+=0.01
 
@@ -172,7 +175,7 @@ def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None, eva
     elif eval_mpc_dynamics is not None:
         evaluator.eval_mpc_dynamics(T=eval_mpc_dynamics)
     elif eval_cost is not None:
-        evaluator.eval_cost(eval_cost)
+        evaluator.eval_cost(goal=eval_cost)
     else:
         for i in tqdm(range(itr)):
             evaluator.ctrl(i,verbose=True)
