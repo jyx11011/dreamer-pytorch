@@ -7,7 +7,7 @@ def save_goal_state(domain="cartpole", task="balance"):
     camera = dict(quadruped=2).get(domain, 0)
     f=domain+"/"+domain+"_"+task
     obs=env.physics.render(64,64,camera_id=camera).transpose(2, 0, 1)
-
+    print(env.task.get_observation(env.physics))
     np.save(f,obs)
 
 if __name__=="__main__":
