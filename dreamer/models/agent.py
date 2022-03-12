@@ -17,14 +17,14 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=10,
-            deterministic_size=100,
-            hidden_size=100,
+            stochastic_size=2,
+            deterministic_size=5,
+            hidden_size=5,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
             pcont_layers=10,
-            pcont_hidden=100,
+            pcont_hidden=5,
             reward_shape=(1,),
             reward_layers=3,
             reward_hidden=300,
@@ -129,6 +129,7 @@ class AgentModel(nn.Module):
 
     def reset(self):
         self.mpc_planner.reset()
+
 
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
