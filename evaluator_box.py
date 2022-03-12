@@ -16,6 +16,8 @@ from dreamer.models.rnns import get_feat
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
+from dreamer.models.box_goal_state import goal_obs
+
 class Evaluator:
     def __init__(self, agent, env, T=100, cuda_idx=None):
         self.env = env
@@ -136,7 +138,17 @@ class Evaluator:
             print(observations[i], image_pred[i])        
         '''
 
-def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None, eval_mpc_dynamics=None):
+    def eval_cost(goal=0.24):
+        goal = goal_obs(goal)
+        goal_feat = self.agent.model.zero_action(goal)
+        x=goal-1
+        while(x<goal+1):
+            feat=self.agent.model.zero_action(goal_obs(x))
+            print(torch.sum((feat-goal_feat)*(feat-goal_feat)))
+            x+=0.01
+
+
+def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None, eval_mpc_dynamics=None, eval_cost=None):
 
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
@@ -159,6 +171,8 @@ def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None, eva
         evaluator.eval_model(T=eval_model)
     elif eval_mpc_dynamics is not None:
         evaluator.eval_mpc_dynamics(T=eval_mpc_dynamics)
+    elif eval_cost is not None:
+        evaluator.eval_cost(eval_cost)
     else:
         for i in tqdm(range(itr)):
             evaluator.ctrl(i,verbose=True)
@@ -171,6 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
     parser.add_argument('--mpc-dynamics', help='evaluate mpc dynamics', type=int, default=None)
+    parser.add_argument('--cost', help='evaluate cost', type=float, default=None)
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
@@ -194,6 +209,7 @@ if __name__ == "__main__":
         game=args.game,
         itr=args.itr,
         eval_model=args.model,
-        eval_mpc_dynamics=args.mpc_dynamics
+        eval_mpc_dynamics=args.mpc_dynamics,
+        eval_cost=args.cost
         )
  
