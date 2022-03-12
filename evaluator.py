@@ -113,8 +113,8 @@ class Evaluator:
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            action, _ = torch.rand(1,1,1) * 2 - 1
-            actions.append(action)
+            action= torch.rand(1,1,1) * 2 - 1
+            actions.append(action[0])
             act = numpify_buffer(action)[0] 
             print(action[0])
             obs, r, d, env_info = self.env.step(action)
@@ -127,7 +127,8 @@ class Evaluator:
         with torch.no_grad():
             feat = [model.zero_action(observations[0])]
             for i in range(T - 1):
-                feat.append(dynamics(feat[i], action[i]))
+                feat.append(dynamics(feat[i], actions[i]))
+            feat = torch.stack(feat, dim=0)
             image_pred = model.observation_decoder(feat)
         print(observations-image_pred.mean)
         '''
