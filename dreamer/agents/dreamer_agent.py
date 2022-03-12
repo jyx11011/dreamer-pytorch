@@ -16,7 +16,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
                  model_kwargs=None, initial_model_state_dict=None, 
-                 sample_rand=1, rand_min=0.8, eval_buffer_size=2, sample_buffer_size=50):
+                 sample_rand=1, rand_min=0.8, eval_buffer_size=10, sample_buffer_size=50):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
@@ -32,10 +32,6 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         self.sample_buffer_size = sample_buffer_size
         self.action_buffer = None
         self.cnt = 0
-
-    def make_env_to_model_kwargs(self, env_spaces):
-        """Generate any keyword args to the model which depend on environment interfaces."""
-        return dict(action_size=env_spaces.action.shape[0])
 
     def __call__(self, observation, prev_action, init_rnn_state):
         model_inputs = buffer_to((observation, prev_action, init_rnn_state), device=self.device)
@@ -94,16 +90,19 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         super().sample_mode(itr)
         self.model.set_mode("sample")
         self._itr=itr
+        '''
         if itr%1000==0:
             self.sample_rand=self.sample_rand-1.0/1000
             if self.sample_rand<self.rand_min:
                 self.sample_rand = self.rand_min
+        '''
 
     def eval_mode(self, itr):
         super().eval_mode(itr)
         self.model.set_mode("eval")
         self.action_buffer=None
         self.cnt=0
+        self.model.reset()
 
     def reset(self):
         super().reset()
