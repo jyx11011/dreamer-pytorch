@@ -129,7 +129,7 @@ class Evaluator:
                 feat.append(dynamics(feat[i], actions[i]))
             feat = torch.stack(feat, dim=0)
             image_pred = model.observation_decoder(feat)
-        print(torch.sum(torch.where(torch.abs(observations-image_pred.mean)>=0.1, 1, 0)))
+        print(torch.sum(torch.where(torch.abs(observations-image_pred.mean)>=0.01, 1, 0)))
         '''
         for i in range(T):
             print(i)
