@@ -26,7 +26,7 @@ if __name__=='__main__':
     parser.add_argument('--bx', help='box position', default=0)
     args = parser.parse_args()
     obs0 = goal_obs(2.0)
-    obs1 = goal_obs(-3)
+    obs1 = goal_obs(-2)
     #f='box_goal_state_'+str(args.bx)
     #np.save(f,obs)
     print(obs0, obs1)
