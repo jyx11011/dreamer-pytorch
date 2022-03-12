@@ -11,7 +11,7 @@ from lxml import etree
 from dreamer.envs.box import Physics
 
 
-def goal_obs(bx=0):
+def goal_obs(bx=0.24):
     f=open("dreamer/envs/box.xml","r")
     MODEL_XML = f.read()
     physics = Physics.from_xml_string(MODEL_XML, common.ASSETS)

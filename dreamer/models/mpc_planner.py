@@ -39,7 +39,7 @@ class MPC_planner:
         self._dtype=torch.float
 
         if goal_weights is None:
-            goal_weights = 10*torch.ones(nx, dtype=self._dtype)
+            goal_weights = torch.ones(nx, dtype=self._dtype)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
@@ -67,8 +67,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        #if self._u_init is None:
-        #    self._u_init = torch.rand(self._timesteps, n_batch, self._nu) * 2 - 1 #torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
+        if self._u_init is None:
+            self._u_init = torch.rand(self._timesteps, n_batch, self._nu) * 2 - 1 #torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -78,13 +78,13 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=10,
+                        max_linesearch_iter=20,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
                         #detach_unconverged = False, 
                         backprop=False,
                         verbose=1,
-                        eps=1e-5,
+                        #eps=1e-2,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
