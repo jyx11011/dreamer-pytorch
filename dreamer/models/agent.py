@@ -128,6 +128,8 @@ class AgentModel(nn.Module):
         with torch.no_grad():
             state = self.get_state_representation(obs)
             feat = get_feat(state)
+
+            print(torch.max(torch.abs(self.observation_decoder(feat).mean - obs)))
         return feat
 
     def update_mpc_planner(self):
