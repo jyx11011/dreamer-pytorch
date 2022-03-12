@@ -46,7 +46,7 @@ class MPC_planner:
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
         self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
-        self._dynamics = Dynamics(dynamics)#.to("cuda")
+        self.dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
         goal_state = torch.clone(state)[0]
@@ -86,7 +86,7 @@ class MPC_planner:
                         verbose=1,
                         #eps=1e-2,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
-            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
+            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self.dynamics)
         action = nominal_actions[:num]
         #if mode == 'eval':
         #    self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
