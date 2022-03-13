@@ -27,7 +27,6 @@ class Evaluator:
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
-        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
@@ -56,29 +55,16 @@ class Evaluator:
 
     def eval_model(self, T=10):
         model = self.agent.model
-        self.agent.reset()
-        self.agent.eval_mode(0)
-        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
-
-        observation = torchify_buffer(self.env.reset()).type(torch.float)
-        observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
-        reward = None
-        actions = []
-        tot=0
-        for t in range(T):
-            observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
-            actions.append(action)
-            act = numpify_buffer(action)[0] 
-            print(action[0])
-            obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
-            observations.append(observation)
-
+        observations = [torch.tensor(self.env.reset())]
+        action = torch.rand(T, 1, 1, device=device) * 2 - 1
+        reward = []
+        for i in range(T):
+            obs, r, d, env_info = self.env.step(action[i][0][0].item())
+            observations.append(torch.tensor(obs))
+            reward.append(r)
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
@@ -88,56 +74,17 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        print(observations-image_pred.mean)
+            reward_pred = model.reward_model(feat)
+        print(torch.sum(torch.where(observations-image_pred.mean>0.01,1,0)))
+        reward = torch.tensor(reward)
+        print(reward_pred.mean, reward)
         '''
         for i in range(T):
             print(i)
             print(observations[i], image_pred[i])        
         '''
 
-    def eval_mpc_dynamics(self, T=10):
-        model = self.agent.model
-        dynamics = self.agent.model.mpc_planner.dynamics
-        self.agent.reset()
-        self.agent.eval_mode(0)
-        self.agent.model.update_mpc_planner()
-        device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
-
-        logger.log("\nStart evaluating mpc dynamics")
-
-        observation = torchify_buffer(self.env.reset()).type(torch.float)
-        observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
-        reward = None
-        actions = []
-        tot=0
-        for t in range(T):
-            observation = observation.unsqueeze(0).to(device)
-            action= torch.rand(1,1,1) * 2 - 1
-            actions.append(action[0])
-            act = numpify_buffer(action)[0] 
-            print(action[0])
-            obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
-            observations.append(observation)
-
-        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
-        observations = observations.type(torch.float) / 255.0 - 0.5
-        actions = torch.stack(actions, dim=0).to(device)
-        with torch.no_grad():
-            feat = [model.zero_action(observations[0])]
-            for i in range(T - 1):
-                feat.append(dynamics(feat[i], actions[i]))
-            feat = torch.stack(feat, dim=0)
-            image_pred = model.observation_decoder(feat)
-        print(observations-image_pred.mean)
-        '''
-        for i in range(T):
-            print(i)
-            print(observations[i], image_pred[i])        
-        '''
-
-def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, eval_mpc_dynamics=None):
+def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=1, eval_model=None):
     domain, task = game.split('_')
     
     params = torch.load(load_model_path) if load_model_path else {}
@@ -173,7 +120,6 @@ if __name__ == "__main__":
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
-    parser.add_argument('--mpc-dynamics', help='evaluate mpc dynamics', type=int, default=None)
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
