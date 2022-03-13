@@ -74,7 +74,7 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-            reward_pred = model.rewaard_model(feat)
+            reward_pred = model.reward_model(feat)
         print(observations-image_pred.mean)
         reward = torch.tensor(reward)
         print(reward_pred.mean, reward)
