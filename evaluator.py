@@ -60,9 +60,11 @@ class Evaluator:
         logger.log("\nStart evaluating model")
         observations = [torch.tensor(self.env.reset())]
         action = torch.rand(T, 1, 1, device=device) * 2 - 1
+        reward = []
         for i in range(T):
             obs, r, d, env_info = self.env.step(action[i][0][0].item())
             observations.append(torch.tensor(obs))
+            reward.append(r)
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         
@@ -72,7 +74,10 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
+            reward_pred = model.rewaard_model(feat)
         print(observations-image_pred.mean)
+        reward = torch.tensor(reward)
+        print(reward_pred.mean, reward)
         '''
         for i in range(T):
             print(i)
