@@ -59,9 +59,9 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                 self.action_buffer = None
                 self.cnt = 0
         else:
-            #action, state = self.model(*model_inputs, self.prev_rnn_state, rand=True)
+            action, state = self.model(*model_inputs, self.prev_rnn_state, rand=True)
             if self.action_buffer is None:
-                rand=self._itr<=5000 or torch.rand(1)[0]<=self.sample_rand
+                rand=self._itr<=200000 or torch.rand(1)[0]<=self.sample_rand
                 if rand:
                     action, state = self.model(*model_inputs, self.prev_rnn_state, rand=rand)
                 else:
