@@ -17,9 +17,9 @@ class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=2,
-            deterministic_size=5,
-            hidden_size=5,
+            stochastic_size=30,
+            deterministic_size=200,
+            hidden_size=200,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,

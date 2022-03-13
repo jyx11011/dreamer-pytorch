@@ -34,7 +34,7 @@ class PendulumCost(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
-            timesteps=100,
+            timesteps=50,
             goal_weights=None, ctrl_penalty=0.001, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
@@ -65,11 +65,11 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=20,
+                        max_linesearch_iter=10,
                         linesearch_decay=0.2,
                         exit_unconverged=False, 
-                        #detach_unconverged = False, 
-                        #backprop=False,
+                        detach_unconverged = False, 
+                        backprop=False,
                         verbose=1,
                         eps=1e-2,
                         #delta_u=1,
