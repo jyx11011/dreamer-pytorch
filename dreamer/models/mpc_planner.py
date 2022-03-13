@@ -30,7 +30,7 @@ class PendulumCost(torch.nn.Module):
         s = state[:,:-1]
         u = state[:,-1:][0]
         sc = self._reward(s)[0]
-        return  -1000*sc + 0.1 * torch.mul(u,u)
+        return  -100*sc + 0.1 * torch.mul(u,u)
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
@@ -48,12 +48,6 @@ class MPC_planner:
         self._dynamics = Dynamics(dynamics)#.to("cuda")
         self._cost = PendulumCost(reward)
 
-    '''
-    def set_goal_state(self, state):
-        self._cost = PendulumCost(state)
-        self._u_init = None
-    '''
-
     def reset(self):
         self._u_init = None
         #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
@@ -62,7 +56,7 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
