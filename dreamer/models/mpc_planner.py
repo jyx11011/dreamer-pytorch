@@ -30,12 +30,12 @@ class PendulumCost(torch.nn.Module):
         s = state[:,:-1]
         u = state[:,-1:][0]
         sc = self._reward(s)[0]
-        return  -sc + 0.001 * torch.mul(u,u)
+        return  -10*sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
             timesteps=50,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            goal_weights=None, ctrl_penalty=0.001, iter=20,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -71,7 +71,7 @@ class MPC_planner:
                         #detach_unconverged = False, 
                         #backprop=False,
                         verbose=1,
-                        eps=1e-5,
+                        eps=1e-6,
                         delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
