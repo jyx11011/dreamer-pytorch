@@ -34,7 +34,7 @@ class PendulumCost(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics, reward,
-            timesteps=100,
+            timesteps=50,
             goal_weights=None, ctrl_penalty=0.001, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
