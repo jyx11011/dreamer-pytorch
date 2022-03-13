@@ -75,7 +75,7 @@ class Evaluator:
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
             reward_pred = model.reward_model(feat)
-        print(observations-image_pred.mean)
+        print(torch.sum(torch.where(observations-image_pred.mean>0.01,1,0)))
         reward = torch.tensor(reward)
         print(reward_pred.mean, reward)
         '''
