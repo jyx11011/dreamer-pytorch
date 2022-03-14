@@ -45,7 +45,7 @@ class Box(Env):
         self.physics.set_control(action)
         self.physics.step()
         obs = self.render()
-        reward = -abs(self.physics.box_position() - 0.24)
+        reward = 2-abs(self.physics.box_position() - 0.24)/10*2
         done = False
         self._obs=self.physics.box_position()
 

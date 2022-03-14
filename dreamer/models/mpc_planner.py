@@ -78,7 +78,7 @@ class MPC_planner:
                         #eps=1e-2,
                         #delta_u=0.1,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
-            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self.dynamics)
+            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
         #if mode == 'eval':
         #    self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
