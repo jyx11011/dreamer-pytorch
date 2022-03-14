@@ -58,7 +58,6 @@ class Evaluator:
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
-        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
@@ -66,7 +65,7 @@ class Evaluator:
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
         action = torch.zeros(1, 1).to(device)
-        reward = None
+        reward = []
         actions = []
         tot=0
         for t in range(T):
@@ -79,6 +78,7 @@ class Evaluator:
             obs, r, d, env_info = self.env.step(action)
             observation = torch.tensor(obs).type(torch.float)
             observations.append(observation)
+            reward.append(r)
 
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
@@ -89,7 +89,10 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        print(torch.sum(torch.where(torch.abs(observations-image_pred.mean)>=0.1, 1, 0)))
+            reward_pred = model.reward_model(feat)
+        print(torch.sum(torch.where(observations-image_pred.mean>0.01,1,0)))
+        reward = torch.tensor(reward)
+        print(reward_pred.mean, reward)
         '''
         for i in range(T):
             print(i)
@@ -172,10 +175,6 @@ def eval(load_model_path, cuda_idx=None, game="box",itr=10, eval_model=None, eva
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
-    elif eval_mpc_dynamics is not None:
-        evaluator.eval_mpc_dynamics(T=eval_mpc_dynamics)
-    elif eval_cost is not None:
-        evaluator.eval_cost(goal=eval_cost)
     else:
         for i in tqdm(range(itr)):
             evaluator.ctrl(i,verbose=True)
@@ -211,8 +210,6 @@ if __name__ == "__main__":
         cuda_idx=args.cuda_idx,
         game=args.game,
         itr=args.itr,
-        eval_model=args.model,
-        eval_mpc_dynamics=args.mpc_dynamics,
-        eval_cost=args.cost
+        eval_model=args.model
         )
  

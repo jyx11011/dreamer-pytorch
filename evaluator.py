@@ -59,15 +59,14 @@ class Evaluator:
 
         logger.log("\nStart evaluating model")
         observations = [torch.tensor(self.env.reset())]
-        action = torch.rand(T, 1, 1, device=device) * 2 - 1
+        actions = torch.rand(T, 1, 1, device=device) * 2 - 1
         reward = []
         for i in range(T):
-            obs, r, d, env_info = self.env.step(action[i][0][0].item())
+            obs, r, d, env_info = self.env.step(actions[i][0][0].item())
             observations.append(torch.tensor(obs))
             reward.append(r)
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
-        actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.representation.initial_state(1, device=device)
@@ -106,8 +105,6 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=1, eval_mod
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
-    elif eval_mpc_dynamics is not None:
-        evaluator.eval_mpc_dynamics(T=eval_mpc_dynamics)
     else:
         for i in tqdm(range(itr)):
             evaluator.ctrl(i,verbose=True)
@@ -142,7 +139,6 @@ if __name__ == "__main__":
         cuda_idx=args.cuda_idx,
         game=args.game,
         itr=args.itr,
-        eval_model=args.model,
-        eval_mpc_dynamics=args.mpc_dynamics
+        eval_model=args.model
         )
  
