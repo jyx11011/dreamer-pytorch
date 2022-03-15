@@ -100,7 +100,7 @@ if __name__ == "__main__":
             os.path.dirname(__file__),
             'data',
             'local',
-            br)
+            args.br)
 
     log_dir = os.path.abspath(args.log_dir)
     

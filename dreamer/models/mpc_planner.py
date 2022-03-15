@@ -25,12 +25,11 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=configs.timesteps,
-            goal_weights=None, ctrl_penalty=0.001, iter=configs.iter,
+            goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
-        self._timesteps=timesteps
+        self._timesteps=configs.timesteps
         self._u_init = None
-        self._iter = iter
+        self._iter = configs.iter
         self._nx = nx
         self._nu = nu
         self._action_low = action_low
@@ -44,7 +43,7 @@ class MPC_planner:
             goal_weights,
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
-        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
+        self._Q = torch.diag(q).repeat(self._timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):

@@ -109,14 +109,14 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--timesteps', default=None)
-    parser.add_argument('--iter', default=None)
-    parser.add_argument('--mli', default=None)
-    parser.add_argument('--ld', default=None)
-    parser.add_argument('--eps', default=None)
-    parser.add_argument('--det', default=None)
-    parser.add_argument('--bp', default=None)
-    parser.add_argument('--delta_u', default=None)
+    parser.add_argument('--timesteps', type=int,default=None)
+    parser.add_argument('--iter', type=int, default=None)
+    parser.add_argument('--mli', type=float, default=None)
+    parser.add_argument('--ld', type=float, default=None)
+    parser.add_argument('--eps', type=float, default=None)
+    parser.add_argument('--det', type=bool, default=None)
+    parser.add_argument('--bp', type=bool, default=None)
+    parser.add_argument('--delta_u', type=float, default=None)
 
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
