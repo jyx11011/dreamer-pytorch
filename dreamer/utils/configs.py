@@ -9,15 +9,15 @@ attributes=['action_repeat',
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=10
+        self.action_repeat=5
 
-        self.model_lr=8e-4
+        self.model_lr=1e-3
 
         self.stochastic_size=30
         self.deterministic_size=200
         self.hidden_size=200
 
-        self.timesteps=30
+        self.timesteps=20
         self.iter=20
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
