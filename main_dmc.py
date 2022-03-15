@@ -85,23 +85,22 @@ if __name__ == "__main__":
     
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
 
-    if br is not None:
-        log_dir='data/local/'+br+'/'
-    
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
         'data',
         'local',
         datetime.datetime.now().strftime("%Y%m%d"))
-    if br is not None:
-        default_log_dir=os.path.join(
+
+    parser.add_argument('--log-dir', type=str, default=default_log_dir)
+    args = parser.parse_args()
+
+    if args.br is not None:
+        args.log_dir=os.path.join(
             os.path.dirname(__file__),
             'data',
             'local',
             br)
 
-    parser.add_argument('--log-dir', type=str, default=default_log_dir)
-    args = parser.parse_args()
     log_dir = os.path.abspath(args.log_dir)
     
     i = args.run_ID
