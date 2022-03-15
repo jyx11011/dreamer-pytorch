@@ -85,24 +85,23 @@ if __name__ == "__main__":
     
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
 
-    args = parser.parse_args()
-    if args.br is not None:
-        log_dir='data/local/'+br+'/'
-    
+    parser.add_argument('--load-model-path', type=str, default=None)
     default_log_dir = os.path.join(
         os.path.dirname(__file__),
         'data',
         'local',
         datetime.datetime.now().strftime("%Y%m%d"))
-    if br is not None:
-        default_log_dir=os.path.join(
+
+    parser.add_argument('--log-dir', type=str, default=default_log_dir)
+    args = parser.parse_args()
+
+    if args.br is not None:
+        args.log_dir=os.path.join(
             os.path.dirname(__file__),
             'data',
             'local',
             br)
 
-    parser.add_argument('--log-dir', type=str, default=default_log_dir)
-    args = parser.parse_args()
     log_dir = os.path.abspath(args.log_dir)
     
     i = args.run_ID
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     print(f'Using run id = {i}')
     args.run_ID = i
 
-    if br is not None and i > 0:
+    if args.br is not None and i > 0:
         args.load_model_path =os.path.join(log_dir, 'run_'+str(i-1), 'params.pkl')
 
     build_and_train(
