@@ -70,7 +70,9 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        print(observations-image_pred.mean)
+        diff=torch.abs(observations-image_pred.mean)
+        print(torch.sum(torch.where(diff>0.01,1,0)))
+
         '''
         for i in range(T):
             print(i)
