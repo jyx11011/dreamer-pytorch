@@ -16,7 +16,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  train_noise=0.4, eval_noise=0,
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
                  model_kwargs=None, initial_model_state_dict=None, 
-                 sample_rand=1, rand_min=0.8, eval_buffer_size=5, sample_buffer_size=50):
+                 sample_rand=0.9, rand_min=0.8, eval_buffer_size=5, sample_buffer_size=50):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
@@ -77,7 +77,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  _, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=0)
                  action = self.action_buffer[self.cnt]
                  self.cnt+=1
-                 if self.cnt == self.sample_buffer_size:
+                 if self.cnt == len(self.action_buffer):
                     self.action_buffer = None
                     self.cnt = 0
 
