@@ -38,8 +38,8 @@ class Configs:
 
     def save(self, dir):
         path=os.path.join(dir, 'configs.pkl')
-        with open(path, 'wb') as f:
-            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+        f=open(path, 'wb')
+        pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
     
 
 def load_configs(load_dir = None, save_dir = None):
