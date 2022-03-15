@@ -6,6 +6,7 @@ import torch.autograd
 import torch.nn.functional as tf
 from mpc import mpc
 
+torch.manual_seed(241)
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
         super(Dynamics, self).__init__()
@@ -24,7 +25,7 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=10,
+            timesteps=15,
             goal_weights=None, ctrl_penalty=0.001, iter=50,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
