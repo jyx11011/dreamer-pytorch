@@ -15,18 +15,23 @@ from dreamer.envs.time_limit import TimeLimit
 from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
+from dreamer.utils.configs import configs, load_configs
 
 from evaluator import Evaluator
 
 def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=1):
     params = torch.load(load_model_path) if load_model_path else {}
 
-    if load_model_path:
-        log_dir=os.path.dirname(load_model_path)+'/../'
+    if load_model_path is not None:
+        load_dir = os.path.dirname(load_model_path)
+    else:
+        load_dir = None
+    load_configs(load_dir=load_dir, save_dir=log_dir)
+        
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
 
-    action_repeat = 8
+    action_repeat = configs.action_repeat
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
