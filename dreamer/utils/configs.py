@@ -55,4 +55,4 @@ def load_configs(load_dir = None, save_dir = None):
     if save_dir is not None:
         configs.save(save_dir)
 
-configs = None
+configs = Configs()
