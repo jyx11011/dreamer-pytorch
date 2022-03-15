@@ -23,7 +23,7 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
 
-    action_repeat = 2
+    action_repeat = 8
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
