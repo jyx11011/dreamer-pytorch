@@ -5,6 +5,7 @@ import torch
 import torch.autograd
 import torch.nn.functional as tf
 from mpc import mpc
+from dreamer.utils.configs import configs
 
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
@@ -24,8 +25,8 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=10,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            timesteps=configs.timesteps,
+            goal_weights=None, ctrl_penalty=0.001, iter=configs.iter,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -74,14 +75,14 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=20,
-                        linesearch_decay=0.2,
+                        max_linesearch_iter=configs.max_linesearch_iter,
+                        linesearch_decay=configs.linesearch_decay,
                         exit_unconverged=False, 
-                        #detach_unconverged = False, 
-                        backprop=False,
+                        detach_unconverged = configs.detach_unconverged, 
+                        backprop=configs.backprop,
                         verbose=1,
-                        eps=1e-5,
-			#delta_u=0.5,
+                        eps=configs.eps,
+			            delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
