@@ -27,6 +27,7 @@ class Evaluator:
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
+        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
@@ -70,7 +71,8 @@ class Evaluator:
             prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        print(observations-image_pred.mean)
+        diff=observations-image_pred.mean
+        print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
         for i in range(T):
             print(i)
@@ -83,7 +85,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
-    action_repeat = 2
+    action_repeat = 8
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
