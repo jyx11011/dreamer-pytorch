@@ -77,7 +77,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  _, state = self.model(*model_inputs, self.prev_rnn_state, rand=False, num=0)
                  action = self.action_buffer[self.cnt]
                  self.cnt+=1
-                 if self.cnt == self.sample_buffer_size:
+                 if self.cnt == len(self.action_buffer):
                     self.action_buffer = None
                     self.cnt = 0
 
