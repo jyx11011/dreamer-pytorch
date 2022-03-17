@@ -12,6 +12,7 @@ from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 from dreamer.models.rnns import get_feat
+from dreamer.utils.configs import configs, load_configs
 
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
@@ -90,7 +91,10 @@ class Evaluator:
             image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations-image_pred.mean)
         print(torch.sum(torch.where(diff>0.01,1,0)))
+<<<<<<< HEAD
 
+=======
+>>>>>>> rp5
         '''
         for i in range(T):
             print(i)
@@ -103,7 +107,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
-    action_repeat = 2
+    action_repeat = configs.action_repeat
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
@@ -126,6 +130,15 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--timesteps', type=int,default=None)
+    parser.add_argument('--iter', type=int, default=None)
+    parser.add_argument('--max_linesearch_iter', type=float, default=None)
+    parser.add_argument('--linesearch_decay', type=float, default=None)
+    parser.add_argument('--eps', type=float, default=None)
+    parser.add_argument('--detach_unconverged', type=bool, default=None)
+    parser.add_argument('--backprop', type=bool, default=None)
+    parser.add_argument('--delta_u', type=float, default=None)
+
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
@@ -148,6 +161,11 @@ if __name__ == "__main__":
     print(f'Using run id = {i}')
     args.run_ID = i
     '''
+
+    load_dir = os.path.dirname(args.load_model_path)
+    load_configs(load_dir=load_dir)
+    configs.update(args)
+    configs.save(log_dir)
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,
