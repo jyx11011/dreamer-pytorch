@@ -68,7 +68,7 @@ class Evaluator:
             reward.append(r)
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
-        actions = torch.stack(actions, dim=0).to(device)
+        actions = action.to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.representation.initial_state(1, device=device)
