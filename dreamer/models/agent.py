@@ -42,7 +42,9 @@ class AgentModel(nn.Module):
         self.dtype = dtype
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
-        self.goal_state = load_goal_state(dtype)
+        domain=kwargs.get("domain")
+        task=kwargs.get("task")
+        self.goal_state = load_goal_state(dtype, domain=domain, task=task)
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
@@ -134,7 +136,7 @@ class AgentModel(nn.Module):
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
     def reset(self):
-        self.update_mpc_planner()
+        self.mpc_planner.reset()
 
 
 class AtariDreamerModel(AgentModel):
