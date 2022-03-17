@@ -28,7 +28,6 @@ class Evaluator:
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
-        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
@@ -57,47 +56,36 @@ class Evaluator:
 
     def eval_model(self, T=10):
         model = self.agent.model
-        self.agent.reset()
-        self.agent.eval_mode(0)
-        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
-
-        observation = torchify_buffer(self.env.reset()).type(torch.float)
-        observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
-        reward = None
-        actions = []
-        tot=0
-        for t in range(T):
-            observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
-            actions.append(action)
-            act = numpify_buffer(action)[0] 
-            print(action[0])
-            obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
-            observations.append(observation)
-
+        observations = [torch.tensor(self.env.reset())]
+        action = torch.rand(T, 1, 1, device=device) * 2 - 1
+        reward = []
+        for i in range(T):
+            obs, r, d, env_info = self.env.step(action[i][0][0].item())
+            observations.append(torch.tensor(obs))
+            reward.append(r)
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
+            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        diff=torch.abs(observations-image_pred.mean)
-        print(torch.sum(torch.where(diff>0.01,1,0)))
+            reward_pred = model.reward_model(feat)
+        print(observations-image_pred.mean)
+        reward = torch.tensor(reward)
+        print(reward_pred.mean, reward)
         '''
         for i in range(T):
             print(i)
             print(observations[i], image_pred[i])        
         '''
 
-def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None):
+def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=1, eval_model=None):
     domain, task = game.split('_')
     
     params = torch.load(load_model_path) if load_model_path else {}
