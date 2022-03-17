@@ -91,10 +91,6 @@ class Evaluator:
             image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations-image_pred.mean)
         print(torch.sum(torch.where(diff>0.01,1,0)))
-<<<<<<< HEAD
-
-=======
->>>>>>> rp5
         '''
         for i in range(T):
             print(i)
