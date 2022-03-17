@@ -27,6 +27,7 @@ class Evaluator:
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
+        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
