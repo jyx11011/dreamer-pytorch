@@ -10,20 +10,21 @@ from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, R
 
 from dreamer.models.mpc_planner import MPC_planner, load_goal_state
 
+from dreamer.utils.configs import configs
 from dreamer.utils.module import get_parameters, FreezeParameters
 
 class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=1,
-            deterministic_size=2,
-            hidden_size=2,
+            stochastic_size=configs.stochastic_size,
+            deterministic_size=configs.deterministic_size,
+            hidden_size=configs.hidden_size,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=1,
-            pcont_hidden=2,
+            pcont_layers=configs.stochastic_size,
+            pcont_hidden=configs.deterministic_size,
             **kwargs,
     ):
         super().__init__()
@@ -135,6 +136,7 @@ class AgentModel(nn.Module):
 
     def reset(self):
         self.update_mpc_planner()
+
 
 
 class AtariDreamerModel(AgentModel):

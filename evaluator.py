@@ -12,6 +12,7 @@ from dreamer.envs.action_repeat import ActionRepeat
 from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 from dreamer.models.rnns import get_feat
+from dreamer.utils.configs import configs, load_configs
 
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
@@ -27,6 +28,7 @@ class Evaluator:
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
+        self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
@@ -55,39 +57,23 @@ class Evaluator:
 
     def eval_model(self, T=10):
         model = self.agent.model
-        self.agent.reset()
-        self.agent.eval_mode(0)
-        self.agent.model.update_mpc_planner()
-        device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
-
         logger.log("\nStart evaluating model")
-
-        observation = torchify_buffer(self.env.reset()).type(torch.float)
-        observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
-        reward = None
-        actions = []
-        tot=0
-        for t in range(T):
-            observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
-            actions.append(action)
-            act = numpify_buffer(action)[0] 
-            print(action[0])
-            obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
-            observations.append(observation)
-
-        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
+        observations = [torch.tensor(self.env.reset())]
+        action = torch.rand(T, 1, 1) * 2 - 1
+        for i in range(T):
+            obs, r, d, env_info = self.env.step(action[i][0][0])
+            observations.append(torch.tensor(obs))
+        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1)
         observations = observations.type(torch.float) / 255.0 - 0.5
-        actions = torch.stack(actions, dim=0).to(device)
+        
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
+            prev_state = model.representation.initial_state(1)
+            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
-        print(observations-image_pred.mean)
+        diff=torch.abs(observations-image_pred.mean)
+        print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
         for i in range(T):
             print(i)
@@ -100,7 +86,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
-    action_repeat = 2
+    action_repeat = configs.action_repeat
     factory_method = make_wapper(
         DeepMindControl,
         [ActionRepeat, NormalizeActions, TimeLimit],
@@ -123,6 +109,15 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--timesteps', type=int,default=None)
+    parser.add_argument('--iter', type=int, default=None)
+    parser.add_argument('--max_linesearch_iter', type=float, default=None)
+    parser.add_argument('--linesearch_decay', type=float, default=None)
+    parser.add_argument('--eps', type=float, default=None)
+    parser.add_argument('--detach_unconverged', type=bool, default=None)
+    parser.add_argument('--backprop', type=bool, default=None)
+    parser.add_argument('--delta_u', type=float, default=None)
+
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
@@ -145,6 +140,11 @@ if __name__ == "__main__":
     print(f'Using run id = {i}')
     args.run_ID = i
     '''
+
+    load_dir = os.path.dirname(args.load_model_path)
+    load_configs(load_dir=load_dir)
+    configs.update(args)
+    configs.save(log_dir)
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,

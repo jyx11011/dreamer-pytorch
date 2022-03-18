@@ -5,7 +5,7 @@ import torch
 import torch.autograd
 import torch.nn.functional as tf
 from mpc import mpc
-from dreamer.utils.module import FreezeParameters
+from dreamer.utils.configs import configs
 
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
@@ -25,12 +25,11 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=50,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
-        self._timesteps=timesteps
+        self._timesteps=configs.timesteps
         self._u_init = None
-        self._iter = iter
+        self._iter = configs.iter
         self._nx = nx
         self._nu = nu
         self._action_low = action_low
@@ -44,7 +43,7 @@ class MPC_planner:
             goal_weights,
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
-        self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
+        self._Q = torch.diag(q).repeat(self._timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
@@ -56,9 +55,11 @@ class MPC_planner:
         self._Q=self._Q.to(state.device)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
+        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
     
     def reset(self):
         self._u_init = None
+        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
 
     def get_next_action(self, state, num=1, mode='sample'):
         if num > self._timesteps:
@@ -74,18 +75,19 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=20,
-                        linesearch_decay=0.1,
+                        max_linesearch_iter=configs.max_linesearch_iter,
+                        linesearch_decay=configs.linesearch_decay,
                         exit_unconverged=False, 
-                        #detach_unconverged = False, 
+                        detach_unconverged = configs.detach_unconverged, 
+                        backprop=configs.backprop,
                         verbose=1,
-                        eps=1e-5,
-                        #delta_u=0.5,
+                        eps=configs.eps,
+			            delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
         #if mode == 'eval':
-        #    self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
+            #self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
         return action
 
 def load_goal_state(dtype):
