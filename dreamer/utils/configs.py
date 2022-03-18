@@ -37,6 +37,8 @@ class Configs:
                 setattr(self, attr, getattr(args, attr))
 
     def save(self, dir):
+        if not os.path.exists(dir):
+            os.mkdir(dir)
         path=os.path.join(dir, 'configs.pkl')
         f=open(path, 'wb')
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
