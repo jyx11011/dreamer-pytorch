@@ -135,7 +135,7 @@ class AgentModel(nn.Module):
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
     def reset(self):
-        self.update_mpc_planner()
+        self.mpc_planner.reset()
 
 
 
