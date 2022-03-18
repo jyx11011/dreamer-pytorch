@@ -66,8 +66,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        if self._u_init is None:
-            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        #if self._u_init is None:
+        self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -84,7 +84,7 @@ class MPC_planner:
                         backprop=configs.backprop,
                         verbose=1,
                         eps=configs.eps,
-			            delta_u=configs.delta_u,
+		        delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
