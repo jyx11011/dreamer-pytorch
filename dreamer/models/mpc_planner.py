@@ -38,7 +38,7 @@ class MPC_planner:
         self._dtype=torch.float
 
         if goal_weights is None:
-            goal_weights = torch.ones(nx, dtype=self._dtype)
+            goal_weights = 10*torch.ones(nx, dtype=self._dtype)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
@@ -66,7 +66,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        self._u_init=torch.zeros(self._timesteps, n_batch, self._nu)#*2-1
+        if self._u_init is None:
+            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -87,8 +88,8 @@ class MPC_planner:
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        #if mode == 'eval':
-        #    self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
+        if mode == 'eval':
+            self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
         return action
 
 def load_goal_state(dtype, domain = "cartpole", task = "balance"):
