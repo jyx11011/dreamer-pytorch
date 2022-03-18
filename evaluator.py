@@ -3,6 +3,7 @@ import os
 import argparse
 import torch
 from tqdm import tqdm
+import numpy as np
 
 from dreamer.agents.dmc_dreamer_agent import DMCDreamerAgent
 from dreamer.algos.dreamer_algo import Dreamer
@@ -24,7 +25,7 @@ class Evaluator:
         self.T = T
         self.cuda_idx = cuda_idx
 
-    def ctrl(self, itr, verbose=False):
+    def ctrl(self, itr, verbose=False, log_path=None):
         logger.log("\nStart evaluating: "f"{itr}")
         self.agent.reset()
         self.agent.eval_mode(itr)
@@ -35,13 +36,17 @@ class Evaluator:
         action = torch.zeros(1, 1, device=self.agent.device).to(device)
         reward = None
 
+        observations = []
+        actions = []
         tot=0
         for t in tqdm(range(self.T), desc='mpc'):
             if verbose:
                 logger.log("position: "f"{self.env.get_obs()}")
             observation = observation.unsqueeze(0).type(torch.float).to(device)
+            observations.append(self.env.get_obs())
             action, _ = self.agent.step(observation, action, reward)
             act = numpify_buffer(action)[0] 
+            actions.append(act)
             print(action)
             obs, r, d, env_info = self.env.step(action)
             tot+=r
@@ -52,6 +57,8 @@ class Evaluator:
                 print(r)
             observation = torch.tensor(obs).type(torch.float)
 
+        if log_path is not None:
+            np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
@@ -97,7 +104,8 @@ class Evaluator:
             print(observations[i], image_pred[i])        
         '''
 
-def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None):
+def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
+        save=True, log_dir=None):
     domain, task = game.split('_')
     
     params = torch.load(load_model_path) if load_model_path else {}
@@ -121,7 +129,10 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
         evaluator.eval_model(T=eval_model)
     else:
         for i in tqdm(range(itr)):
-            evaluator.ctrl(i,verbose=True)
+            path = None
+            if log_dir is not None:
+                path = os.path.join(log_dir, 'iter_'+str(i))
+            evaluator.ctrl(i,verbose=True, log_path=path)
 
 
 if __name__ == "__main__":
@@ -141,32 +152,32 @@ if __name__ == "__main__":
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
-    default_log_dir = os.path.join(
-        os.path.dirname(__file__),
-        'data',
-        'test',
-        datetime.datetime.now().strftime("%Y%m%d"))
-    parser.add_argument('--log-dir', type=str, default=default_log_dir)
-    args = parser.parse_args()
-    log_dir = os.path.abspath(args.log_dir)
-    '''
-    i = args.run_ID
+
+    parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
     
-    while os.path.exists(os.path.join(log_dir, 'run_' + str(i))):
-        i += 1
-    print(f'Using run id = {i}')
-    args.run_ID = i
-    '''
+    args = parser.parse_args()
 
     load_dir = os.path.dirname(args.load_model_path)
     load_configs(load_dir=load_dir)
     configs.update(args)
     configs.save(log_dir)
+
+    log_dir = os.path.join(os.path.dirname(args.load_mode_path), 'eval_log')
+
+    i = args.run_ID
+    while os.path.exists(os.path.join(log_dir, 'run_' + str(i))):
+        i += 1
+    print(f'Using run id = {i}')
+    args.run_ID = i
+    log_dir = os.path.join(log_dir, 'run_'+str(i))
+
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,
         game=args.game,
         itr=args.itr,
-        eval_model=args.model
+        eval_model=args.model,
+        save=args.save,
+        log_dir=log_dir
         )
  
