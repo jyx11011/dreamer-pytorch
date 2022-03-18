@@ -157,11 +157,7 @@ class Dreamer(RlAlgorithm):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
         self.agent.model.update_mpc_planner()
-<<<<<<< HEAD
-        if itr % self.evaluate_every == 0:
-=======
         if itr>=200000 and itr % self.evaluate_every == 0:
->>>>>>> 237cb8b50f1f3e8b26c370fdf0676a221d2a69e5
             self.evaluator.ctrl(itr)
         return opt_info
 
