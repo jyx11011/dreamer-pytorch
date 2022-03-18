@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from dreamer.algos.replay import initialize_replay_buffer, samples_to_buffer
 from dreamer.models.rnns import get_feat, get_dist
+from dreamer.utils.configs import configs
 from dreamer.utils.logging import video_summary
 from dreamer.utils.module import get_parameters, FreezeParameters
 
@@ -27,14 +28,14 @@ class Dreamer(RlAlgorithm):
     def __init__(
             self,  
             evaluator,
-            evaluate_every=5000,
+            evaluate_every=50000,
             # Hyper-parameters
             batch_size=50,
             batch_length=50,
             train_every=1000,
             train_steps=100,
             pretrain=100,
-            model_lr=6e-4,
+            model_lr=configs.model_lr,
             grad_clip=100.0,
             dataset_balance=False,
             discount=0.99,
@@ -74,8 +75,7 @@ class Dreamer(RlAlgorithm):
 
         self.optimizer = None
         self.type = type
-        self.evaluator = evaluator
-        self.evaluate_every = evaluate_every
+
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples, world_size=1, rank=0):
         self.agent = agent
@@ -157,7 +157,11 @@ class Dreamer(RlAlgorithm):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
         self.agent.model.update_mpc_planner()
+<<<<<<< HEAD
         if itr % self.evaluate_every == 0:
+=======
+        if itr>=200000 and itr % self.evaluate_every == 0:
+>>>>>>> 237cb8b50f1f3e8b26c370fdf0676a221d2a69e5
             self.evaluator.ctrl(itr)
         return opt_info
 
