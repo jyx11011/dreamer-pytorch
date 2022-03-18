@@ -160,9 +160,8 @@ if __name__ == "__main__":
     load_dir = os.path.dirname(args.load_model_path)
     load_configs(load_dir=load_dir)
     configs.update(args)
-    configs.save(log_dir)
 
-    log_dir = os.path.join(os.path.dirname(args.load_mode_path), 'eval_log')
+    log_dir = os.path.join(os.path.dirname(args.load_model_path), 'eval_log')
 
     i = args.run_ID
     while os.path.exists(os.path.join(log_dir, 'run_' + str(i))):
@@ -171,6 +170,8 @@ if __name__ == "__main__":
     args.run_ID = i
     log_dir = os.path.join(log_dir, 'run_'+str(i))
 
+    configs.save(log_dir)
+    
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,
