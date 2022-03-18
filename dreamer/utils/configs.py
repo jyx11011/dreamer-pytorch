@@ -11,7 +11,7 @@ class Configs:
     def __init__(self, args = None):
         self.action_repeat=5
 
-        self.model_lr=1e-3
+        self.model_lr=6e-4
 
         self.stochastic_size=30
         self.deterministic_size=200
