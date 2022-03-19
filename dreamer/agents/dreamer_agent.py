@@ -5,6 +5,7 @@ from rlpyt.utils.buffer import buffer_to, buffer_func
 from rlpyt.utils.collections import namedarraytuple
 
 from dreamer.models.agent import AgentModel
+from dreamer.utils.configs import configs
 
 DreamerAgentInfo = namedarraytuple('DreamerAgentInfo', ['prev_state'])
 
@@ -28,7 +29,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
         self.sample_rand=sample_rand
         self.rand_min=rand_min
 
-        self.eval_buffer_size = eval_buffer_size
+        self.eval_buffer_size = configs.eval_buffer_size
         self.sample_buffer_size = sample_buffer_size
         self.action_buffer = None
         self.cnt = 0

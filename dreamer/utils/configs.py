@@ -5,7 +5,8 @@ attributes=['action_repeat',
             'model_lr', 
             'stochastic_size', 'deterministic_size', 'hiddent_size', 
             'timesteps', 'iter', 'max_linesearch_iter', 'linesearch_decay',
-            'eps', 'detach_unconverged', 'backprop', 'delta_u']
+            'eps', 'detach_unconverged', 'backprop', 'delta_u',
+            'eval_buffer_size']
 
 class Configs:
     def __init__(self, args = None):
@@ -25,6 +26,8 @@ class Configs:
         self.detach_unconverged=False
         self.backprop=False
         self.delta_u=None
+
+        self.eval_buffer_size=5
 
         if args is not None:
             for attr in attributes:
