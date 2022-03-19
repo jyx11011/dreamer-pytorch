@@ -18,11 +18,11 @@ class Configs:
         self.deterministic_size=200
         self.hidden_size=200
 
-        self.timesteps=20
-        self.iter=20
+        self.timesteps=12
+        self.iter=50
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
-        self.eps=1e-5
+        self.eps=1e-6
         self.detach_unconverged=False
         self.backprop=False
         self.delta_u=None
