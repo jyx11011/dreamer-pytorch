@@ -67,16 +67,24 @@ class MPC_planner:
             num = self._timesteps
         n_batch = state.shape[0]
         if self._u_init is None:
-            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+            self._u_init=torch.rand(50, n_batch, self._nu)*2-1
+            timesteps=50
+            px = -torch.sqrt(self._goal_weights) * goal_state                                        
+            p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))        
+            p = p.repeat(timesteps, 1)                                                         
+            Q=self._.to(state.device)                                                         
+        self._cost = mpc.QuadCost(self._Q, p) 
+        else:
+            timesteps=self._timesteps
         state = torch.clone(state)
 
         with torch.enable_grad():
-            ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
-                        u_lower=self._action_low * torch.ones(self._timesteps, n_batch, self._nu,device=state.device), 
-                        u_upper=self._action_high * torch.ones(self._timesteps, n_batch, self._nu,device=state.device), 
+            ctrl = mpc.MPC(self._nx, self._nu, timesteps, 
+                        u_lower=self._action_low * torch.ones(timesteps, n_batch, self._nu,device=state.device), 
+                        u_upper=self._action_high * torch.ones(timesteps, n_batch, self._nu,device=state.device), 
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
-                        u_init=self._u_init,
+                        u_init=self._u_init[:timesteps],
                         max_linesearch_iter=configs.max_linesearch_iter,
                         linesearch_decay=configs.linesearch_decay,
                         exit_unconverged=False, 
