@@ -15,15 +15,15 @@ from dreamer.utils.module import get_parameters, FreezeParameters
 class AgentModel(nn.Module):
     def __init__(
             self,
-            action_shape,
+            action_shape=(1,),
             stochastic_size=1,
-            deterministic_size=2,
-            hidden_size=2,
+            deterministic_size=1,
+            hidden_size=1,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=1,
-            pcont_hidden=2,
+            pcont_layers=5,
+            pcont_hidden=20,
             **kwargs,
     ):
         super().__init__()
@@ -43,7 +43,7 @@ class AgentModel(nn.Module):
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
         self.goal_state = load_goal_state(dtype)
-        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
+        
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
         if use_pcont:
@@ -128,6 +128,7 @@ class AgentModel(nn.Module):
         with torch.no_grad():
             state = self.get_state_representation(obs)
             feat = get_feat(state)
+            print("goal_pred:",torch.sum(torch.where(torch.abs(obs-self.observation_decoder(feat).mean)>=0.01, 1, 0)))
         return feat
 
     def update_mpc_planner(self):

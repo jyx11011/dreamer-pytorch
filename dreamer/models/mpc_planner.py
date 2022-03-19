@@ -6,6 +6,7 @@ import torch.autograd
 import torch.nn.functional as tf
 from mpc import mpc
 from dreamer.utils.module import FreezeParameters
+from dreamer.models.box_goal_state import goal_obs
 
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
@@ -25,8 +26,8 @@ class Dynamics(torch.nn.Module):
 
 class MPC_planner:
     def __init__(self, nx, nu, dynamics,
-            timesteps=60,
-            goal_weights=None, ctrl_penalty=0.001, iter=50,
+            timesteps=50,
+            goal_weights=None, ctrl_penalty=0.001, iter=20,
             action_low=-1.0, action_high=1.0):
         self._timesteps=timesteps
         self._u_init = None
@@ -45,7 +46,7 @@ class MPC_planner:
             ctrl_penalty * torch.ones(nu, dtype=self._dtype)
         ))
         self._Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
-        self._dynamics = Dynamics(dynamics)#.to("cuda")
+        self.dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
         goal_state = torch.clone(state)[0]
@@ -56,16 +57,18 @@ class MPC_planner:
         self._Q=self._Q.to(state.device)
         self._cost = mpc.QuadCost(self._Q, p)
         self._u_init = None
+        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
     
     def reset(self):
         self._u_init = None
+        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
 
     def get_next_action(self, state, num=1, mode='sample'):
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
         if self._u_init is None:
-            self._u_init = torch.rand(self._timesteps, n_batch, self._nu,device=state.device) * 2 - 1#torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
+            self._u_init = torch.rand(self._timesteps, n_batch, self._nu) * 2 - 1 #torch.clamp(torch.randn(self._timesteps, n_batch, self._nu),-1,1)
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -84,7 +87,7 @@ class MPC_planner:
                         eps=1e-4,
                         #delta_u=0.5,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
-            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
+            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self.dynamics)
         action = nominal_actions[:num]
         if mode == 'eval':
             self._u_init = torch.cat((nominal_actions[num:], torch.zeros(num, n_batch, self._nu, dtype=self._dtype,device=action.device)), dim=0)
