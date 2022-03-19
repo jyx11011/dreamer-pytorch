@@ -145,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--detach_unconverged', type=bool, default=None)
     parser.add_argument('--backprop', type=bool, default=None)
     parser.add_argument('--delta_u', type=float, default=None)
+    parser.add_argument('--eval_buffer_size', type=float, default=None)
 
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
