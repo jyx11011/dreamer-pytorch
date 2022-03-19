@@ -10,20 +10,21 @@ from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, R
 
 from dreamer.models.mpc_planner import MPC_planner, load_goal_state
 
+from dreamer.utils.configs import configs
 from dreamer.utils.module import get_parameters, FreezeParameters
 
 class AgentModel(nn.Module):
     def __init__(
             self,
-            action_shape=(1,),
-            stochastic_size=1,
-            deterministic_size=1,
-            hidden_size=1,
+            action_shape,
+            stochastic_size=configs.stochastic_size,
+            deterministic_size=configs.deterministic_size,
+            hidden_size=configs.hidden_size,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=5,
-            pcont_hidden=20,
+            pcont_layers=configs.stochastic_size,
+            pcont_hidden=configs.deterministic_size,
             **kwargs,
     ):
         super().__init__()
@@ -42,8 +43,10 @@ class AgentModel(nn.Module):
         self.dtype = dtype
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
-        self.goal_state = load_goal_state(dtype)
-        
+        domain=kwargs.get("domain")
+        task=kwargs.get("task")
+        self.goal_state = load_goal_state(dtype, domain=domain, task=task)
+        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
         if use_pcont:
