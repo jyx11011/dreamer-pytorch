@@ -50,6 +50,7 @@ class MPC_planner:
 
     def set_goal_state(self, state):
         goal_state = state[0]
+        self._goal_state=goal_state
         self._goal_weights=self._goal_weights.to(state.device)
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
@@ -73,10 +74,10 @@ class MPC_planner:
 
             q = torch.cat((
                 self._goal_weights,
-                self._ctrl_penalty * torch.ones(nu, dtype=self._dtype)
+                self._ctrl_penalty * torch.ones(self._nu, dtype=self._dtype, device=state.device)
             ))
-            Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
-            px = -torch.sqrt(self._goal_weights) * goal_state
+            Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype).to(state.device)
+            px = -torch.sqrt(self._goal_weights) * self._goal_state
             p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
             p = p.repeat(timesteps, 1)
             cost=mpc.QuadCost(Q, p)
