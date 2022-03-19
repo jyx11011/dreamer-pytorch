@@ -17,7 +17,7 @@ class Configs:
         self.deterministic_size=200
         self.hidden_size=200
 
-        self.timesteps=20
+        self.timesteps=10
         self.iter=20
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
