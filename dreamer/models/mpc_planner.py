@@ -67,16 +67,21 @@ class MPC_planner:
             num = self._timesteps
         n_batch = state.shape[0]
         if self._u_init is None:
-            self._u_init=torch.rand(50, n_batch, self._nu)*2-1
             timesteps=50
-            px = -torch.sqrt(self._goal_weights) * goal_state                                        
-            p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))        
-            p = p.repeat(timesteps, 1)                                                         
-            Q=self._.to(state.device)                                                         
-        self._cost = mpc.QuadCost(self._Q, p) 
+            self._u_init=torch.rand(timesteps, n_batch, self._nu)*2-1
+
+            q = torch.cat((
+                self._goal_weights,
+                ctrl_penalty * torch.ones(nu, dtype=self._dtype)
+            ))
+            Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
+            px = -torch.sqrt(self._goal_weights) * goal_state
+            p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
+            p = p.repeat(timesteps, 1)
+            cost=mpc.QuadCost(Q, p)
         else:
             timesteps=self._timesteps
-        state = torch.clone(state)
+            cost=self._cost
 
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, timesteps, 
@@ -94,7 +99,7 @@ class MPC_planner:
                         eps=configs.eps,
 		        delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
-            nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
+            nominal_states, nominal_actions, nominal_objs = ctrl(state, cost, self._dynamics)
         action = nominal_actions[:num]
         if mode == 'eval':
             self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
