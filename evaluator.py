@@ -24,6 +24,7 @@ class Evaluator:
         self.agent = agent
         self.T = T
         self.cuda_idx = cuda_idx
+        self.action_dim=env.spaces.action.shape[0]
 
     def ctrl(self, itr, verbose=False, log_path=None):
         logger.log("\nStart evaluating: "f"{itr}")
@@ -33,7 +34,7 @@ class Evaluator:
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
 
         observations = []
@@ -73,7 +74,7 @@ class Evaluator:
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
         actions = []
         tot=0
