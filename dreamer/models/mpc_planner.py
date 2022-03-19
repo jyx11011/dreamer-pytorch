@@ -36,6 +36,7 @@ class MPC_planner:
         self._action_low = action_low
         self._action_high = action_high
         self._dtype=torch.float
+        self._ctrl_penalty=ctrl_penalty
 
         if goal_weights is None:
             goal_weights = 10*torch.ones(nx, dtype=self._dtype)
@@ -72,7 +73,7 @@ class MPC_planner:
 
             q = torch.cat((
                 self._goal_weights,
-                ctrl_penalty * torch.ones(nu, dtype=self._dtype)
+                self._ctrl_penalty * torch.ones(nu, dtype=self._dtype)
             ))
             Q = torch.diag(q).repeat(timesteps, 1, 1).type(self._dtype)
             px = -torch.sqrt(self._goal_weights) * goal_state
