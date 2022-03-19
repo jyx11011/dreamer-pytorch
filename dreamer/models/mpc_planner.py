@@ -38,7 +38,7 @@ class MPC_planner:
         self._dtype=torch.float
 
         if goal_weights is None:
-            goal_weights = 10*torch.ones(nx, dtype=self._dtype)
+            goal_weights = 20*torch.ones(nx, dtype=self._dtype)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
@@ -84,7 +84,7 @@ class MPC_planner:
                         backprop=configs.backprop,
                         verbose=1,
                         eps=configs.eps,
-		        delta_u=configs.delta_u,
+		                delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self.dynamics)
         action = nominal_actions[:num]
