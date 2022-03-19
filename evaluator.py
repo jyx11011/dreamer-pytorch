@@ -19,7 +19,7 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=100, cuda_idx=None):
+    def __init__(self, agent, env, T=500, cuda_idx=None):
         self.env = env
         self.agent = agent
         self.T = T
