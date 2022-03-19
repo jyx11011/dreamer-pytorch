@@ -19,7 +19,7 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=100, cuda_idx=None):
+    def __init__(self, agent, env, T=100, cuda_idx=None, game='cartpole'):
         self.env = env
         self.agent = agent
         self.T = T
@@ -87,6 +87,9 @@ class Evaluator:
             observation = torch.tensor(obs).type(torch.float)
             observations.append(observation)
 
+            if self.game == 'cartpole_swingup':
+                if not -0.98 <= obs['position'][0] <= 0.98:
+                    break
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
@@ -123,7 +126,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx)
+    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game)
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
