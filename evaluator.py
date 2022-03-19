@@ -106,8 +106,10 @@ class Evaluator:
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
         save=True, log_dir=None):
-    domain, task = game.split('_')
-    
+    domain, task = game.split('_',1)
+    if '_' in task:
+        d,task=task.split('_')
+        domain+='_'+d
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
