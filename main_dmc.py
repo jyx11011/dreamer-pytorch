@@ -20,6 +20,11 @@ from dreamer.utils.configs import configs, load_configs
 from evaluator import Evaluator
 
 def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=1):
+    domain, task = game.split('_',1)
+    if '_' in task:
+        d,task=task.split('_')
+        domain+='_'+d
+    
     params = torch.load(load_model_path) if load_model_path else {}
 
     if load_model_path is not None:
@@ -51,7 +56,7 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, 
-                              model_kwargs={"cuda_idx": cuda_idx})
+                              model_kwargs={"cuda_idx": cuda_idx, "domain": domain, "task": task})
     
     evaluator=Evaluator(agent, factory_method(name=game))
     algo = Dreamer(evaluator, initial_optim_state_dict=optimizer_state_dict)  # Run with defaults.
