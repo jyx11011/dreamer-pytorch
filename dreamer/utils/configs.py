@@ -5,11 +5,12 @@ attributes=['action_repeat',
             'model_lr', 
             'stochastic_size', 'deterministic_size', 'hiddent_size', 
             'timesteps', 'iter', 'max_linesearch_iter', 'linesearch_decay',
-            'eps', 'detach_unconverged', 'backprop', 'delta_u']
+            'eps', 'detach_unconverged', 'backprop', 'delta_u',
+            'eval_buffer_size']
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=8
+        self.action_repeat=2
 
         self.model_lr=1e-3
 
@@ -17,14 +18,16 @@ class Configs:
         self.deterministic_size=200
         self.hidden_size=200
 
-        self.timesteps=40
-        self.iter=12
+        self.timesteps=12
+        self.iter=50
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
-        self.eps=1e-5
+        self.eps=1e-6
         self.detach_unconverged=False
         self.backprop=False
-        self.delta_u=0.5
+        self.delta_u=None
+
+        self.eval_buffer_size=5
 
         if args is not None:
             for attr in attributes:
@@ -37,6 +40,8 @@ class Configs:
                 setattr(self, attr, getattr(args, attr))
 
     def save(self, dir):
+        if not os.path.exists(dir):
+            os.mkdir(dir)
         path=os.path.join(dir, 'configs.pkl')
         f=open(path, 'wb')
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)

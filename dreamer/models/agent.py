@@ -43,7 +43,9 @@ class AgentModel(nn.Module):
         self.dtype = dtype
         
         self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
-        self.goal_state = load_goal_state(dtype)
+        domain=kwargs.get("domain")
+        task=kwargs.get("task")
+        self.goal_state = load_goal_state(dtype, domain=domain, task=task)
         self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
@@ -129,6 +131,7 @@ class AgentModel(nn.Module):
         with torch.no_grad():
             state = self.get_state_representation(obs)
             feat = get_feat(state)
+            print("goal_pred:",torch.sum(torch.where(torch.abs(obs-self.observation_decoder(feat).mean)>=0.01, 1, 0)))
         return feat
 
     def update_mpc_planner(self):
