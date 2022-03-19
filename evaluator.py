@@ -88,7 +88,7 @@ class Evaluator:
             observations.append(observation)
 
             if self.game == 'cartpole_swingup':
-                if not -0.98 <= obs['position'][0] <= 0.98:
+                if torch.abs(obs['position'][0]) <= 0.98:
                     break
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
