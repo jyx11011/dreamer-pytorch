@@ -12,13 +12,13 @@ class Configs:
     def __init__(self, args = None):
         self.action_repeat=2
 
-        self.model_lr=6e-4
+        self.model_lr=1e-3
 
-        self.stochastic_size=30
-        self.deterministic_size=200
-        self.hidden_size=200
+        self.stochastic_size=3
+        self.deterministic_size=20
+        self.hidden_size=20
 
-        self.timesteps=12
+        self.timesteps=15
         self.iter=50
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
