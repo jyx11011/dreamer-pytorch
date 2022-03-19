@@ -19,11 +19,12 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=100, cuda_idx=None, game='cartpole'):
+    def __init__(self, agent, env, T=100, cuda_idx=None, game='cartpole_balance'):
         self.env = env
         self.agent = agent
         self.T = T
         self.cuda_idx = cuda_idx
+        self.game = game
 
     def ctrl(self, itr, verbose=False, log_path=None):
         logger.log("\nStart evaluating: "f"{itr}")
@@ -57,6 +58,9 @@ class Evaluator:
                 print(r)
             observation = torch.tensor(obs).type(torch.float)
 
+            if self.game == 'cartpole_balance':
+                if np.abs(self.env.get_obs()['position'][1]) <= 0.98:
+                    break
         if log_path is not None:
             np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
@@ -87,9 +91,6 @@ class Evaluator:
             observation = torch.tensor(obs).type(torch.float)
             observations.append(observation)
 
-            if self.game == 'cartpole_swingup':
-                if not -0.98 <= obs['position'][0] <= 0.98:
-                    break
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
