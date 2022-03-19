@@ -59,10 +59,8 @@ class Evaluator:
             observation = torch.tensor(obs).type(torch.float)
 
             if self.game == 'cartpole_balance':
-                print(obs['position'][1])
-                if torch.abs(obs['position'][1]) <= 0.98:
+                if np.abs(self.env.get_obs()['position'][1]) <= 0.98:
                     break
-        observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         if log_path is not None:
             np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
