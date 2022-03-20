@@ -18,6 +18,9 @@ class DeepMindControl(Env):
         domain, task = name.split('_', 1)
         if domain == 'cup':  # Only domain with multiple words.
             domain = 'ball_in_cup'
+        if '_' in task:
+            d,task=task.split('_')
+            domain+='_'+d
         if isinstance(domain, str):
             self._env = suite.load(domain, task)
         else:

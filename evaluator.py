@@ -25,6 +25,7 @@ class Evaluator:
         self.T = T
         self.cuda_idx = cuda_idx
         self.game = game
+        self.action_dim=env.spaces.action.shape[0]
 
     def ctrl(self, itr, verbose=False, log_path=None):
         logger.log("\nStart evaluating: "f"{itr}")
@@ -34,7 +35,7 @@ class Evaluator:
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
 
         observations = []
@@ -77,7 +78,7 @@ class Evaluator:
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
-        action = torch.zeros(1, 1, device=self.agent.device).to(device)
+        action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
         actions = []
         tot=0
@@ -110,8 +111,11 @@ class Evaluator:
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
         save=True, log_dir=None,T=100):
-    domain, task = game.split('_')
     
+    domain, task = game.split('_',1)
+    if '_' in task:
+        d,task=task.split('_')
+        domain+='_'+d
     params = torch.load(load_model_path) if load_model_path else {}
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
