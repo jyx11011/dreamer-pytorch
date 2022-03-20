@@ -19,13 +19,14 @@ from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
 class Evaluator:
-    def __init__(self, agent, env, T=100, cuda_idx=None, game='cartpole_balance'):
+    def __init__(self, agent, env, T=100, cuda_idx=None, game='cartpole_balance', min_cos=0.98):
         self.env = env
         self.agent = agent
         self.T = T
         self.cuda_idx = cuda_idx
         self.game = game
         self.action_dim=env.spaces.action.shape[0]
+        self.min_cos=min_cos
 
     def ctrl(self, itr, verbose=False, log_path=None):
         logger.log("\nStart evaluating: "f"{itr}")
@@ -60,7 +61,7 @@ class Evaluator:
             observation = torch.tensor(obs).type(torch.float)
 
             if self.game == 'cartpole_balance':
-                if np.abs(self.env.get_obs()['position'][1]) <= 0.98:
+                if np.abs(self.env.get_obs()['position'][1]) <= self.min_cos:
                     break
         if log_path is not None:
             np.savez(log_path, observations=observations, actions=actions)
@@ -110,7 +111,7 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None,T=100):
+        save=True, log_dir=None,T=100, min_cos=0.98):
     
     domain, task = game.split('_',1)
     if '_' in task:
@@ -131,7 +132,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T)
+    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T,min_cos=min_cos)
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
@@ -164,6 +165,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
     parser.add_argument('--T', type=int, default=100)
+
+    parser.add_argument('--min-cos', type=float, default=0.98)
     args = parser.parse_args()
 
     load_dir = os.path.dirname(args.load_model_path)
@@ -190,6 +193,7 @@ if __name__ == "__main__":
         eval_model=args.model,
         save=args.save,
         log_dir=log_dir,
-        T=args.T
+        T=args.T,
+        min_cos=args.min_cos
         )
  
