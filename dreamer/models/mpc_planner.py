@@ -23,9 +23,19 @@ class Dynamics(torch.nn.Module):
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
 
+class PendulumCost(torch.nn.Module):
+    def __init__(self, reward):
+        super().__init__()
+        self._reward = reward
+
+    def forward(self, state):
+        s = state[:,:-1]
+        u = state[:,-1:][0]
+        sc = self._reward(s)[0]
+        return  -10*sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
-    def __init__(self, nx, nu, dynamics,
+    def __init__(self, nx, nu, dynamics, reward,
             goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
         self._timesteps=configs.timesteps
@@ -36,28 +46,9 @@ class MPC_planner:
         self._action_low = action_low
         self._action_high = action_high
         self._dtype=torch.float
-
-        if goal_weights is None:
-            goal_weights = 10*torch.ones(nx, dtype=self._dtype)
-        self._goal_weights = goal_weights
-        q = torch.cat((
-            goal_weights,
-            ctrl_penalty * torch.ones(nu, dtype=self._dtype)
-        ))
-        self._Q = torch.diag(q).repeat(self._timesteps, 1, 1).type(self._dtype)
         self._dynamics = Dynamics(dynamics)#.to("cuda")
+        self._cost = PendulumCost(reward)
 
-    def set_goal_state(self, state):
-        goal_state = state[0]
-        self._goal_weights=self._goal_weights.to(state.device)
-        px = -torch.sqrt(self._goal_weights) * goal_state
-        p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
-        p = p.repeat(self._timesteps, 1)
-        self._Q=self._Q.to(state.device)
-        self._cost = mpc.QuadCost(self._Q, p)
-        self._u_init = None
-        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
-    
     def reset(self):
         self._u_init = None
         #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
