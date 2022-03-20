@@ -109,7 +109,7 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None):
+        save=True, log_dir=None,T=100):
     domain, task = game.split('_')
     
     params = torch.load(load_model_path) if load_model_path else {}
@@ -127,7 +127,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game)
+    evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T)
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
-    
+    parser.add_argument('--T', type=int, default=100)
     args = parser.parse_args()
 
     load_dir = os.path.dirname(args.load_model_path)
@@ -185,6 +185,7 @@ if __name__ == "__main__":
         itr=args.itr,
         eval_model=args.model,
         save=args.save,
-        log_dir=log_dir
+        log_dir=log_dir,
+        T=args.T
         )
  
