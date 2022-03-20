@@ -56,6 +56,7 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, 
+                              sample_rand=sample_rand,
                               model_kwargs={"cuda_idx": cuda_idx, "domain": domain, "task": task})
     
     evaluator=Evaluator(agent, factory_method(name=game))
