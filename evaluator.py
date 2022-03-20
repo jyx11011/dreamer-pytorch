@@ -131,8 +131,6 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     
     if eval_model is not None:
         evaluator.eval_model(T=eval_model)
-    elif eval_mpc_dynamics is not None:
-        evaluator.eval_mpc_dynamics(T=eval_mpc_dynamics)
     else:
         for i in tqdm(range(itr)):
             path = None
