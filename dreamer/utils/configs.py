@@ -12,7 +12,7 @@ class Configs:
     def __init__(self, args = None):
         self.action_repeat=2
 
-        self.model_lr=6e-4
+        self.model_lr=1e-3
 
         self.stochastic_size=30
         self.deterministic_size=200
@@ -20,7 +20,7 @@ class Configs:
 
         self.timesteps=12
         self.iter=50
-        self.max_linesearch_iter=20
+        self.max_linesearch_iter=10
         self.linesearch_decay=0.2
         self.eps=1e-6
         self.detach_unconverged=False
