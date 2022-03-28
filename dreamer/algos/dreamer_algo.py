@@ -207,7 +207,7 @@ class Dreamer(RlAlgorithm):
         observation_truth = torch.cat((observation[1:],last_obs),dim=0)
         feat = get_feat(post)
         image_pred = model.observation_decoder(feat)
-        image_loss = -torch.mean(image_pred.log_prob(observation_truth))
+        image_loss = -torch.mean(image_pred.log_prob(observation))
 
         init_state = self.agent.model.get_state_representation(observation[0])
         pri = model.rollout.rollout_transition(batch_t, action, init_state)
