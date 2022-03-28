@@ -57,7 +57,7 @@ class Dreamer(RlAlgorithm):
             n_step_return=1,
             updates_per_sync=1,  # For async mode only. (not implemented)
             free_nats=3,
-            kl_scale=1,
+            kl_scale=10,
             type=torch.float,
             prefill=5000,
             log_video=True,
