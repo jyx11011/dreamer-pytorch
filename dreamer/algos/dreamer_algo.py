@@ -206,7 +206,7 @@ class Dreamer(RlAlgorithm):
         observation_truth = torch.cat((observation[1:],last_obs),dim=0)
         feat = get_feat(post)
         image_pred = model.observation_decoder(feat)
-        image_loss = -torch.mean(image_pred.log_prob(observation_truth))
+        image_loss = -torch.mean(image_pred.log_prob(observation))
 
         pcont_loss = torch.tensor(0.)  # placeholder if use_pcont = False
         if self.use_pcont:
