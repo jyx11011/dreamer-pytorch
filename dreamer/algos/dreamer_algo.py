@@ -204,12 +204,12 @@ class Dreamer(RlAlgorithm):
         # Compute losses for each component of the model
 
         # Model Loss
-        observation_truth = torch.concat((observation[1:],last_obs),dim=0)
+        observation_truth = torch.cat((observation[1:],last_obs),dim=0)
         feat = get_feat(post)
         image_pred = model.observation_decoder(feat)
         image_loss = -torch.mean(image_pred.log_prob(observation_truth))
 
-        init_state = self.agent.get_state_representation(observation[0])
+        init_state = self.agent.model.get_state_representation(observation[0])
         pri = model.rollout.rollout_transition(batch_t, action, init_state)
         pri_feat = get_feat(pri)
         pri_pred = model.observation_decoder(pri_feat)
