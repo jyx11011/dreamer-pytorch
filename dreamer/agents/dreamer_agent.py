@@ -18,7 +18,7 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  expl_type="additive_gaussian", expl_min=0.1, expl_decay=7000,
                  model_kwargs=None, initial_model_state_dict=None, 
                  sample_rand=0.95, rand_iter=100000,
-                 rand_min=0.8, eval_buffer_size=5, sample_buffer_size=50):
+                 rand_min=0.8, eval_buffer_size=5, sample_buffer_size=5):
         self.train_noise = train_noise
         self.eval_noise = eval_noise
         self.expl_type = expl_type
