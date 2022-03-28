@@ -210,7 +210,7 @@ class Dreamer(RlAlgorithm):
 
         pri = model.rollout.rollout_transition(batch_t-1, action[1:], post[0])
         pri_feat = get_feat(pri)
-        pri_pred = image_pred[:1],model.observation_decoder(pri_feat)
+        pri_pred = model.observation_decoder(pri_feat)
         pri_loss = -torch.mean(pri_pred.log_prob(observation[1:]))
         pcont_loss = torch.tensor(0.)  # placeholder if use_pcont = False
         if self.use_pcont:
