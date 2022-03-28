@@ -18,7 +18,6 @@ torch.autograd.set_detect_anomaly(True)  # used for debugging gradients
 
 loss_info_fields = ['model_loss', 'prior_entropy', 'post_entropy', 'divergence',
                     'image_loss', 
-                    'pri_loss',
                     'pcont_loss']
 LossInfo = namedarraytuple('LossInfo', loss_info_fields)
 OptInfo = namedarraytuple("OptInfo",
@@ -209,11 +208,6 @@ class Dreamer(RlAlgorithm):
         image_pred = model.observation_decoder(feat)
         image_loss = -torch.mean(image_pred.log_prob(observation_truth))
 
-        init_state = self.agent.model.get_state_representation(observation[0])
-        pri = model.rollout.rollout_transition(batch_t, action, init_state)
-        pri_feat = get_feat(pri)
-        pri_pred = model.observation_decoder(pri_feat)
-        pri_loss = -torch.mean(pri_pred.log_prob(observation_truth))
         pcont_loss = torch.tensor(0.)  # placeholder if use_pcont = False
         if self.use_pcont:
             pcont_pred = model.pcont(feat)
@@ -223,7 +217,7 @@ class Dreamer(RlAlgorithm):
         post_dist = get_dist(post)
         div = torch.mean(torch.distributions.kl.kl_divergence(post_dist, prior_dist))
         div = torch.max(div, div.new_full(div.size(), self.free_nats))
-        model_loss = self.kl_scale * div + image_loss + pri_loss
+        model_loss = self.kl_scale * div + image_loss
         if self.use_pcont:
             model_loss += self.pcont_scale * pcont_loss
 
@@ -271,7 +265,6 @@ class Dreamer(RlAlgorithm):
             prior_ent = torch.mean(prior_dist.entropy())
             post_ent = torch.mean(post_dist.entropy())
             loss_info = LossInfo(model_loss, prior_ent, post_ent, div, image_loss,
-                                 pri_loss,
                                  pcont_loss)
 
             if self.log_video:
