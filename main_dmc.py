@@ -89,7 +89,7 @@ if __name__ == "__main__":
                         choices=['all', 'none', 'gap', 'last'])
     
     parser.add_argument('--sample-rand', help='between 0 and 1', type=float, default=1)
-    parser.add_argument('--rand-iter', type=int, default=200000)
+    parser.add_argument('--rand-iter', type=int, default=500000)
     
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
 
