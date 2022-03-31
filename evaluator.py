@@ -68,7 +68,7 @@ class Evaluator:
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
-    def eval_model(self, T=20,rand=True):
+    def eval_model(self, T=20,rand=True,save=10):
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
@@ -86,7 +86,7 @@ class Evaluator:
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
             if rand:
-                action=torch.rand(1,1)
+                action=torch.rand(1,1)*2-1
             else:
                 action, _ = self.agent.step(observation, action.to(device), reward)
             actions.append(action)
@@ -96,7 +96,7 @@ class Evaluator:
             observation = torch.tensor(obs)
             observations.append(observation)
 
-        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)),0,255)
+        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
         
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
@@ -111,8 +111,9 @@ class Evaluator:
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img,img_p]).astype(np.uint8)
         np.save('img', img_st)
-        show(img,name='truth')
-        show(img_p,name='pred')
+        ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save)),1)]
+        show(img[ind],name='truth')
+        show(img_p[ind],name='pred')
 
         print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
