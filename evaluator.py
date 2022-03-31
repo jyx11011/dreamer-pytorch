@@ -4,6 +4,8 @@ import argparse
 import torch
 from tqdm import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
+from image import show
 
 from dreamer.agents.dmc_dreamer_agent import DMCDreamerAgent
 from dreamer.algos.dreamer_algo import Dreamer
@@ -68,7 +70,7 @@ class Evaluator:
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
-    def eval_model(self, T=10):
+    def eval_model(self, T=20,rand=True,save=10):
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
@@ -85,24 +87,44 @@ class Evaluator:
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
+            if rand:
+                action=torch.rand(1,1)*2-1
+            else:
+                action, _ = self.agent.step(observation, action.to(device), reward)
             actions.append(action)
             act = numpify_buffer(action)[0] 
             print(action[0])
             obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
+            observation = torch.tensor(obs)
             observations.append(observation)
 
+        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
+        
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
+            prev_state = model.get_state_representation(observations[0])
+            prior = model.rollout.rollout_transition(T-1, actions[:-1], prev_state)
+            feat = get_feat(prior)
+            image_pred = torch.cat((((observations[0][0]+0.5)*255).unsqueeze(0).unsqueeze(1)
+                         ,model.observation_decoder(feat).mean))
+            prev_state=model.representation.initial_state(1, device=device, dtype=torch.float)
+            _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
+
             feat = get_feat(post)
-            image_pred = model.observation_decoder(feat)
-        diff=torch.abs(observations-image_pred.mean)
+            post_pred = model.observation_decoder(feat).mean
+        diff=torch.abs(observations[:]-image_pred)
+        img_p=np.clip((np.array(image_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        img_post=np.clip((np.array(post_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        img_st=np.stack([img,img_p,img_post]).astype(np.uint8)
+        np.save('img', img_st)
+        ind=[i for i in range(0, T, int(np.max((np.floor(1.0*T/save),1))))]
+        show(img[ind],name='truth')
+        show(img_p[ind],name='pred')
+        show(img_post[ind],name='post_pred')
+
         print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
         for i in range(T):
@@ -111,7 +133,8 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None,T=100, min_cos=0.98):
+        save=True, log_dir=None,rand=True,T=100, min_cos=0.98):
+    domain, task = game.split('_')
     
     domain, task = game.split('_',1)
     if '_' in task:
@@ -135,7 +158,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T,min_cos=min_cos)
     
     if eval_model is not None:
-        evaluator.eval_model(T=eval_model)
+        evaluator.eval_model(T=eval_model,rand=rand)
     else:
         for i in tqdm(range(itr)):
             path = None
@@ -162,6 +185,8 @@ if __name__ == "__main__":
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
+
+    parser.add_argument('--rand', help='rand action', type=bool,default=True)  # path to params.pkl
 
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
     parser.add_argument('--T', type=int, default=100)
@@ -194,6 +219,7 @@ if __name__ == "__main__":
         save=args.save,
         log_dir=log_dir,
         T=args.T,
-        min_cos=args.min_cos
+        min_cos=args.min_cos,
+        rand=args.rand
         )
  
