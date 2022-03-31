@@ -103,15 +103,15 @@ class Evaluator:
         actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
-            feat = get_feat(post)
-            image_pred = model.observation_decoder(feat)
-        diff=torch.abs(observations-image_pred.mean)
+            prev_state = model.get_representation(observations[0])
+            prior = model.rollout.rollout_transition(T-1, actions[1:], prev_state)
+            feat = get_feat(prior)
+            image_pred = model.observation_decoder(prior)
+        diff=torch.abs(observations[1:]-image_pred.mean)
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img,img_p]).astype(np.uint8)
         np.save('img', img_st)
-        ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save)),1)]
+        ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save),1))]
         show(img[ind],name='truth')
         show(img_p[ind],name='pred')
 
