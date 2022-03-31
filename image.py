@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-def show(img, hspace=0.05, wspace=0.05):
+def show(img, hspace=0.05, wspace=0.05,name='cartpole'):
     if len(img.shape)==4:
         img=np.expand_dims(img, 1)
     elif len(img.shape)==3:
@@ -25,10 +25,9 @@ def show(img, hspace=0.05, wspace=0.05):
                 else:
                     axarr[i][j].imshow(img[i][j])
                     axarr[i][j].axis('off')
+    plt.savefig(name+'.png',bbox_inches='tight')
 
 if __name__=='__main__':
     img=np.transpose(np.load(os.getcwd()+'/dreamer/models/cartpole/cartpole_balance.npy'),
                         (1,2,0))
     show(np.array([img,img]))
-
-    plt.savefig('cartpole.png',bbox_inches='tight')
