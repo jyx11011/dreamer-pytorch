@@ -96,7 +96,7 @@ class Evaluator:
             observation = torch.tensor(obs)
             observations.append(observation)
 
-        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
+        img=np.clip(np.stack(observations[1:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
         
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
@@ -104,14 +104,14 @@ class Evaluator:
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.get_state_representation(observations[0])
-            prior = model.rollout.rollout_transition(T-1, actions[1:], prev_state)
+            prior = model.rollout.rollout_transition(T-1, actions[:-1], prev_state)
             feat = get_feat(prior)
-            image_pred = model.observation_decoder(prior)
+            image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations[1:]-image_pred.mean)
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img,img_p]).astype(np.uint8)
         np.save('img', img_st)
-        ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save),1))]
+        ind=[i for i in range(0, T-1, int(np.max((np.floor(1.0*T/save),1))))]
         show(img[ind],name='truth')
         show(img_p[ind],name='pred')
 
