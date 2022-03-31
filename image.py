@@ -27,7 +27,7 @@ def show(img, hspace=0.05, wspace=0.05,name='cartpole'):
                     axarr[i][j].axis('off')
     plt.savefig(name+'.png',bbox_inches='tight')
 
+
 if __name__=='__main__':
-    img=np.transpose(np.load(os.getcwd()+'/dreamer/models/cartpole/cartpole_balance.npy'),
-                        (1,2,0))
-    show(np.array([img,img]))
+    img=np.load(os.getcwd()+'/img.npy')
+    show(img.astype(np.uint8))

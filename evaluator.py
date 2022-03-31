@@ -106,7 +106,7 @@ class Evaluator:
             image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations-image_pred.mean)
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
-        img_st=np.stack([img,img_p])
+        img_st=np.stack([img,img_p]).astype(np.uint8)
         np.save('img', img_st)
         show(img_st)
 
@@ -168,7 +168,6 @@ if __name__ == "__main__":
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
-    
     args = parser.parse_args()
 
     load_dir = os.path.dirname(args.load_model_path)
