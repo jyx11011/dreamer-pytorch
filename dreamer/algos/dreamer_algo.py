@@ -56,7 +56,7 @@ class Dreamer(RlAlgorithm):
             n_step_return=1,
             updates_per_sync=1,  # For async mode only. (not implemented)
             free_nats=3,
-            kl_scale=0.5,
+            kl_scale=1,
             type=torch.float,
             prefill=5000,
             log_video=True,
@@ -176,7 +176,7 @@ class Dreamer(RlAlgorithm):
 
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
         last_obs=samples.all_observation[-1]
-        action = samples.all_action[1:]
+        action = samples.all_action[:-1]
         done = samples.done
         done = done.unsqueeze(2)
 
