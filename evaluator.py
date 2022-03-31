@@ -68,7 +68,7 @@ class Evaluator:
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
-    def eval_model(self, T=20):
+    def eval_model(self, T=20,rand=True):
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
@@ -85,8 +85,10 @@ class Evaluator:
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            #action, _ = self.agent.step(observation, action.to(device), reward)
-            action=torch.rand(1,1)
+            if rand:
+                action=torch.rand(1,1)
+            else:
+                action, _ = self.agent.step(observation, action.to(device), reward)
             actions.append(action)
             act = numpify_buffer(action)[0] 
             print(action[0])
@@ -109,7 +111,8 @@ class Evaluator:
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img,img_p]).astype(np.uint8)
         np.save('img', img_st)
-        show(img_st)
+        show(img,name='truth')
+        show(img_p,name='pred')
 
         print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
@@ -119,7 +122,7 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None):
+        save=True, log_dir=None,rand=True):
     domain, task = game.split('_')
     
     params = torch.load(load_model_path) if load_model_path else {}
@@ -140,7 +143,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game)
     
     if eval_model is not None:
-        evaluator.eval_model(T=eval_model)
+        evaluator.eval_model(T=eval_model,rand=rand)
     else:
         for i in tqdm(range(itr)):
             path = None
@@ -168,6 +171,8 @@ if __name__ == "__main__":
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
+    parser.add_argument('--rand', help='rand action', type=bool,default=True)  # path to params.pkl
+
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl
     args = parser.parse_args()
 
@@ -194,6 +199,7 @@ if __name__ == "__main__":
         itr=args.itr,
         eval_model=args.model,
         save=args.save,
-        log_dir=log_dir
+        log_dir=log_dir,
+        rand=args.rand
         )
  
