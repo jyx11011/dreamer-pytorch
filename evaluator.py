@@ -68,7 +68,7 @@ class Evaluator:
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
 
-    def eval_model(self, T=10):
+    def eval_model(self, T=20):
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
@@ -85,7 +85,8 @@ class Evaluator:
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
-            action, _ = self.agent.step(observation, action.to(device), reward)
+            #action, _ = self.agent.step(observation, action.to(device), reward)
+            action=torch.rand(1,1)
             actions.append(action)
             act = numpify_buffer(action)[0] 
             print(action[0])
