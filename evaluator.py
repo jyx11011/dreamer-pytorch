@@ -96,7 +96,7 @@ class Evaluator:
             observation = torch.tensor(obs)
             observations.append(observation)
 
-        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
+        img=np.clip(np.stack(observations[1:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
         
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
@@ -117,7 +117,7 @@ class Evaluator:
         img_post=np.clip((np.array(post_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img[1:],img_p,img_post]).astype(np.uint8)
         np.save('img', img_st)
-        ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save),1))]
+        ind=[i for i in range(0, T-1, int(np.max((np.floor(1.0*T/save),1))))]
         show(img[ind],name='truth')
         show(img_p[ind],name='pred')
         show(img_post[id],name='post_pred')
