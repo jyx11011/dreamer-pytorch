@@ -4,6 +4,8 @@ import argparse
 import torch
 from tqdm import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
+from image import show
 
 from dreamer.agents.dmc_dreamer_agent import DMCDreamerAgent
 from dreamer.algos.dreamer_algo import Dreamer
@@ -88,9 +90,11 @@ class Evaluator:
             act = numpify_buffer(action)[0] 
             print(action[0])
             obs, r, d, env_info = self.env.step(action)
-            observation = torch.tensor(obs).type(torch.float)
+            observation = torch.tensor(obs)
             observations.append(observation)
 
+        img=torch.stack(observations[:-1], dim=0).transpose(0,2,3,1)
+        
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
         actions = torch.stack(actions, dim=0).to(device)
@@ -101,6 +105,12 @@ class Evaluator:
             feat = get_feat(post)
             image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations-image_pred.mean)
+
+        img_p=np.clip((image_pred.mean.transpose(0,2,3,1)+0.5)*255,0,255).astype(np.uint8)
+        img_st=np.stack([img,img_p])
+        np.save('img', img_st)
+        show(img_st)
+
         print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
         for i in range(T):
