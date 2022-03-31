@@ -106,7 +106,7 @@ class Evaluator:
             image_pred = model.observation_decoder(feat)
         diff=torch.abs(observations-image_pred.mean)
 
-        img_p=np.clip((image_pred.mean+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
+        img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
         img_st=np.stack([img,img_p])
         np.save('img', img_st)
         show(img_st)
