@@ -96,7 +96,7 @@ class Evaluator:
             observation = torch.tensor(obs)
             observations.append(observation)
 
-        img=np.stack(observations[:-1]).transpose((0,2,3,1))
+        img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)),0,255)
         
         observations = torch.stack(observations[:-1], dim=0).unsqueeze(1).to(device)
         observations = observations.type(torch.float) / 255.0 - 0.5
