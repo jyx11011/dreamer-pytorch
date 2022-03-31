@@ -104,16 +104,23 @@ class Evaluator:
         with torch.no_grad():
             embed = model.observation_encoder(observations)
             prev_state = model.get_state_representation(observations[0])
-            prior = model.rollout.rollout_transition(T-1, actions[1:], prev_state)
+            prior = model.rollout.rollout_transition(T-1, actions[:-1], prev_state)
+            prev_state=model.representation.initial_state(1, device=device, dtype=torch.float)
+            _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
             feat = get_feat(prior)
-            image_pred = model.observation_decoder(prior)
+            image_pred = model.observation_decoder(feat)
+
+            feat = get_feat(post)
+            post_pred = model.observation_decoder(feat)
         diff=torch.abs(observations[1:]-image_pred.mean)
         img_p=np.clip((np.array(image_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
-        img_st=np.stack([img,img_p]).astype(np.uint8)
+        img_post=np.clip((np.array(post_pred.mean)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        img_st=np.stack([img[1:],img_p,img_post]).astype(np.uint8)
         np.save('img', img_st)
         ind=[i for i in range(0, T, np.max(np.floor(1.0*T/save),1))]
         show(img[ind],name='truth')
         show(img_p[ind],name='pred')
+        show(img_post[id],name='post_pred')
 
         print(torch.sum(torch.where(diff>0.01,1,0)))
         '''
