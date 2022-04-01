@@ -16,7 +16,7 @@ from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 from dreamer.models.rnns import get_feat
 from dreamer.utils.configs import configs, load_configs
-
+from dreamer.models.mpc_planner import load_goal_state
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
@@ -69,7 +69,15 @@ class Evaluator:
             np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
-
+    def eval_goal(self):
+        goal=load_goal_state(torch.float)
+        state = self.get_state_representation(goal)
+        feat = get_feat(state)
+        pred=self.agent.model.observation_decoder(feat).mean
+        pred=np.clip((np.array(pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        show(pred, name='goal_pred')
+        goal=np.clip((np.array(goal)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        show(goal, name='goal')
     def eval_model(self, T=20,rand=True,save=10,t=5):
         model = self.agent.model
         self.agent.reset()
@@ -77,6 +85,7 @@ class Evaluator:
         self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
+        eval_goal()
         logger.log("\nStart evaluating model")
 
         observation = torchify_buffer(self.env.reset()).type(torch.float)
