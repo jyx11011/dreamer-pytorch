@@ -135,7 +135,7 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5):
+        save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5,img=10):
     domain, task = game.split('_')
     
     domain, task = game.split('_',1)
@@ -160,7 +160,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T,min_cos=min_cos)
     
     if eval_model is not None:
-        evaluator.eval_model(T=eval_model,rand=rand,t=t)
+        evaluator.eval_model(T=eval_model,rand=rand,t=t,save=img)
     else:
         for i in tqdm(range(itr)):
             path = None
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
     parser.add_argument('--t', help='evaluate model', type=int, default=5)
+    parser.add_argument('--img', help='evaluate model', type=int, default=10)
     
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
@@ -225,6 +226,7 @@ if __name__ == "__main__":
         log_dir=log_dir,
         T=args.T,
         min_cos=args.min_cos,
-        rand=args.rand
+        rand=args.rand,
+        img=args.img
         )
  
