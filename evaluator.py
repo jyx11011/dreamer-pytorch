@@ -139,10 +139,7 @@ class Evaluator:
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
         save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5,img=10):
-<<<<<<< HEAD
-=======
     domain, task = game.split('_')
->>>>>>> 450b057a5d2bcbacfa5ebdb06182b33daf9605b4
     
     domain, task = game.split('_',1)
     if '_' in task:
@@ -197,10 +194,7 @@ if __name__ == "__main__":
     
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
-<<<<<<< HEAD
     
-=======
->>>>>>> 450b057a5d2bcbacfa5ebdb06182b33daf9605b4
     parser.add_argument('--rand', help='rand action', type=bool,default=True)  # path to params.pkl
 
     parser.add_argument('--save', help='save', type=bool,default=True)  # path to params.pkl

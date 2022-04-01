@@ -19,17 +19,9 @@ from dreamer.utils.configs import configs, load_configs
 
 from evaluator import Evaluator
 
-<<<<<<< HEAD
-def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=1):
-    domain, task = game.split('_',1)
-    if '_' in task:
-        d,task=task.split('_')
-        domain+='_'+d
-=======
 def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, 
         sample_rand=1, rand_iter=100000):
     domain, task = game.split('_')
->>>>>>> 450b057a5d2bcbacfa5ebdb06182b33daf9605b4
     
     params = torch.load(load_model_path) if load_model_path else {}
 
