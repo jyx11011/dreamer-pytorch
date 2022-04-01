@@ -87,7 +87,7 @@ class Evaluator:
 
         eval_goal()
         logger.log("\nStart evaluating model")
-
+        self.eval_goal()
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
         action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
