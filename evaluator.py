@@ -71,12 +71,14 @@ class Evaluator:
 
     def eval_goal(self):
         goal=load_goal_state(torch.float)
-        state = self.get_state_representation(goal)
-        feat = get_feat(state)
-        pred=self.agent.model.observation_decoder(feat).mean
-        pred=np.clip((np.array(pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        with torch.no_grad():
+            state = self.agent.model.get_state_representation(goal)
+            feat = get_feat(state)
+            pred=self.agent.model.observation_decoder(feat).mean
+        pred=np.clip((np.array(pred)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
+        print(pred.shape)
         show(pred, name='goal_pred')
-        goal=np.clip((np.array(goal)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        goal=np.clip((np.array(goal)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
         show(goal, name='goal')
     def eval_model(self, T=20,rand=True,save=10,t=5):
         model = self.agent.model
