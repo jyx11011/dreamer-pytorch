@@ -38,8 +38,8 @@ class MPC_planner:
         self._dtype=torch.float
 
         if goal_weights is None:
-            goal_weights = torch.cat(0.1*torch.ones(dynamics._stoch_size, dtype=self._dtype),
-                                    10*torch.ones(_deter_size, dtype=self._dtype))
+            goal_weights = torch.cat((0.1*torch.ones(dynamics._stoch_size, dtype=self._dtype),
+                                    10*torch.ones(dynamics._deter_size, dtype=self._dtype)))
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
