@@ -69,6 +69,15 @@ class Evaluator:
             np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
+    def eval_goal(self):
+        goal=load_goal_state(torch.float)
+        state = self.get_state_representation(goal)
+        feat = get_feat(state)
+        pred=self.agent.model.observation_decoder(feat).mean
+        pred=np.clip((np.array(pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        show(pred, name='goal_pred')
+        goal=np.clip((np.array(goal)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
+        show(goal, name='goal')
 
     def eval_model(self, T=20,rand=True,save=10,t=5):
         model = self.agent.model
@@ -78,7 +87,7 @@ class Evaluator:
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
         logger.log("\nStart evaluating model")
-
+        self.eval_goal()
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
         action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
