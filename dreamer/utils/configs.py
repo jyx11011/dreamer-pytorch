@@ -14,9 +14,9 @@ class Configs:
 
         self.model_lr=1e-3
 
-        self.stochastic_size=3
-        self.deterministic_size=20
-        self.hidden_size=20
+        self.stochastic_size=5
+        self.deterministic_size=5
+        self.hidden_size=5
 
         self.timesteps=15
         self.iter=20
