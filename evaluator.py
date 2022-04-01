@@ -16,7 +16,7 @@ from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 from dreamer.models.rnns import get_feat
 from dreamer.utils.configs import configs, load_configs
-
+from dreamer.models.mpc_planner import load_goal_state
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
