@@ -9,9 +9,9 @@ attributes=['action_repeat',
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=2
+        self.action_repeat=5
 
-        self.model_lr=6e-4
+        self.model_lr=1e-3
 
         self.stochastic_size=1
         self.deterministic_size=5
@@ -24,7 +24,7 @@ class Configs:
         self.eps=1e-6
         self.detach_unconverged=True
         self.backprop=False
-        self.delta_u=None
+        self.delta_u=0.5
 
         if args is not None:
             for attr in attributes:
