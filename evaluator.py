@@ -83,7 +83,7 @@ class Evaluator:
         observations = [observation]
         action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
-        actions = []
+        actions = [torch.zeros(1,1)]
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
@@ -113,7 +113,7 @@ class Evaluator:
             post_pred = model.observation_decoder(feat).mean
 
             prev_state = model.get_state_representation(observations[t-1])
-            prior = model.rollout.rollout_transition(T-t, actions[t-1:-1], prev_state)
+            prior = model.rollout.rollout_transition(T-t, actions[t:], prev_state)
             feat = get_feat(prior)
             image_pred = torch.cat((post_pred[:t]
                          ,model.observation_decoder(feat).mean))
