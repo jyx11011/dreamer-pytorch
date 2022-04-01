@@ -19,7 +19,10 @@ from dreamer.utils.configs import configs, load_configs
 
 from evaluator import Evaluator
 
-def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, sample_rand=1):
+def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, eval=False, save_model='last', load_model_path=None, 
+        sample_rand=1, rand_iter=100000):
+    domain, task = game.split('_')
+    
     params = torch.load(load_model_path) if load_model_path else {}
 
     if load_model_path is not None:
@@ -51,7 +54,8 @@ def build_and_train(log_dir, game="cartpole_balance", run_ID=0, cuda_idx=None, e
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict, 
-                              model_kwargs={"cuda_idx": cuda_idx})
+                              sample_rand=sample_rand, rand_iter=rand_iter,
+                              model_kwargs={"cuda_idx": cuda_idx, "domain": domain, "task": task})
     
     evaluator=Evaluator(agent, factory_method(name=game))
     algo = Dreamer(evaluator, initial_optim_state_dict=optimizer_state_dict)  # Run with defaults.
@@ -82,6 +86,7 @@ if __name__ == "__main__":
                         choices=['all', 'none', 'gap', 'last'])
     
     parser.add_argument('--sample-rand', help='between 0 and 1', type=float, default=1)
+    parser.add_argument('--rand-iter', type=int, default=100000)
     
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
 
@@ -122,5 +127,6 @@ if __name__ == "__main__":
         eval=args.eval,
         save_model=args.save_model,
         load_model_path=args.load_model_path,
-        sample_rand=args.sample_rand
+        sample_rand=args.sample_rand,
+        rand_iter=args.rand_iter
         )

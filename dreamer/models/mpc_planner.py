@@ -7,6 +7,7 @@ import torch.nn.functional as tf
 from mpc import mpc
 from dreamer.utils.configs import configs
 
+torch.manual_seed(1)
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
         super(Dynamics, self).__init__()
@@ -47,7 +48,7 @@ class MPC_planner:
         self._dynamics = Dynamics(dynamics)#.to("cuda")
 
     def set_goal_state(self, state):
-        goal_state = torch.clone(state)[0]
+        goal_state = state[0]
         self._goal_weights=self._goal_weights.to(state.device)
         px = -torch.sqrt(self._goal_weights) * goal_state
         p = torch.cat((px, torch.zeros(self._nu, dtype=self._dtype,device=state.device)))
@@ -65,7 +66,8 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        self._u_init = torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        if self._u_init is None:
+            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
 
         with torch.enable_grad():
@@ -86,12 +88,10 @@ class MPC_planner:
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
-        #if mode == 'eval':
-            #self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
+        if mode == 'eval':
+            self._u_init = torch.cat((nominal_actions[num:], torch.rand(num, n_batch, self._nu, dtype=self._dtype,device=action.device) * 2 - 1), dim=0)
         return action
 
-def load_goal_state(dtype):
-    domain = "cartpole"
-    task = "balance"
+def load_goal_state(dtype, domain = "cartpole", task = "balance"):
     goal_state_obs = np.load(os.getcwd()+'/dreamer/models/'+domain+'/'+domain+'_'+task+'.npy')
     return torch.tensor(goal_state_obs / 255.0 - 0.5, dtype=dtype).unsqueeze(0)
