@@ -10,13 +10,13 @@ attributes=['action_repeat',
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=2
+        self.action_repeat=10
 
         self.model_lr=1e-3
 
-        self.stochastic_size=3
-        self.deterministic_size=20
-        self.hidden_size=20
+        self.stochastic_size=30
+        self.deterministic_size=200
+        self.hidden_size=200
 
         self.timesteps=15
         self.iter=20
