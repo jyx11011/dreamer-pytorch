@@ -46,11 +46,11 @@ class AgentModel(nn.Module):
         self.action_size = output_size
         self.dtype = dtype
         
-        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
+        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition,reward)
         domain=kwargs.get("domain")
         task=kwargs.get("task")
         self.goal_state = load_goal_state(dtype, domain=domain, task=task)
-        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
+        #self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
         if use_pcont:
@@ -142,7 +142,8 @@ class AgentModel(nn.Module):
         return feat
     
     def update_mpc_planner(self):
-        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
+        pass
+        #self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
 class AtariDreamerModel(AgentModel):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None, 
