@@ -141,8 +141,13 @@ class Evaluator:
 
         print(torch.sum(torch.where(diff>0.01,1,0)))
 
-        reward = torch.tensor(reward)
-        print(reward_pred.mean, reward)
+        rp=np.array(reward_pred.mean.squeeze(1))
+        print(reward_pred.mean.squeeze(1), reward)
+
+        plt.plot(rp)
+        plt.plot(reward)
+        
+        plt.savefig('reward.png')
         '''
         for i in range(T):
             print(i)
