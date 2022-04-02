@@ -79,7 +79,6 @@ class Evaluator:
         show(pred, name='goal_pred')
         goal=np.clip((np.array(goal)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
         show(goal, name='goal')
-
     def eval_model(self, T=20,rand=True,save=10,t=5):
         model = self.agent.model
         self.agent.reset()
@@ -87,6 +86,7 @@ class Evaluator:
         self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
+        eval_goal()
         logger.log("\nStart evaluating model")
         self.eval_goal()
         observation = torchify_buffer(self.env.reset()).type(torch.float)
@@ -115,11 +115,6 @@ class Evaluator:
         actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.representation.initial_state(1, device=device)
-            prior, post = model.rollout.rollout_representation(T, embed, action, prev_state)
-            feat = get_feat(post)
-            image_pred = model.observation_decoder(feat)
-            reward_pred = model.reward_model(feat)
             
             prev_state=model.representation.initial_state(1, device=device, dtype=torch.float)
             _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
