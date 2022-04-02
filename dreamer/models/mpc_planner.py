@@ -35,7 +35,7 @@ class PendulumCost(torch.nn.Module):
         return  -10*sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
-    def __init__(self, nx, nu, dynamics,reward,
+    def __init__(self, nx, nu, dynamics, reward,
             goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
         self._timesteps=configs.timesteps
