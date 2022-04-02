@@ -83,7 +83,6 @@ class DreamerAgent(RecurrentAgentMixin, BaseAgent):
                  if self.cnt == len(self.action_buffer):
                     self.action_buffer = None
                     self.cnt = 0
-            #'''
 
         # Model handles None, but Buffer does not, make zeros if needed:
         prev_state = self.prev_rnn_state or buffer_func(state, torch.zeros_like)
