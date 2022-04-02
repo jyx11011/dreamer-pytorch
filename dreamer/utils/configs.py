@@ -51,7 +51,7 @@ def load_configs(load_dir = None, save_dir = None):
     if load_dir is not None:
         path=os.path.join(load_dir, 'configs.pkl')
         if os.path.exists(path):
-            f = open(path, 'wb')
+            f = open(path, 'rb')
             configs = pickle.load(f)
         else:
             configs = Configs()

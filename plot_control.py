@@ -1,12 +1,12 @@
 import os
 import argparse
 import numpy as np
-from dreamer.utils.configs import load_configs,attributes
+from dreamer.utils.configs import configs,load_configs,attributes
 
 def print_configs(configs):
     for atrr in attributes:
-        v=getattr(configs, attr, None)
-        print(atrr+': '+v, end=', ')
+        v=getattr(configs, atrr, None)
+        print(atrr+': '+str(v), end=', ')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -25,12 +25,12 @@ if __name__=='__main__':
         'eval_log',
         'run_'+args.it
         )
-    config=load_configs(load_dir=path)
-    print(config)
+    load_configs(load_dir=path)
+    print_configs(configs)
     i=0
-    while os.path.exists(os.path.join(path, 'run_' + str(i))):
-        f=os.path.join(path, 'run_' + str(i))
-        data=np.load(f)
+    while os.path.exists(os.path.join(path, 'iter_' + str(i)+'.npz')):
+        f=os.path.join(path, 'iter_' + str(i)+'.npz')
+        data=np.load(f,allow_pickle=True)
         print(data['observations'])
         print(data['actions'])
         i+=1
