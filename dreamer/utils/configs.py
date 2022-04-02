@@ -10,7 +10,7 @@ attributes=['action_repeat',
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=5
+        self.action_repeat=8
 
         self.model_lr=1e-3
 
