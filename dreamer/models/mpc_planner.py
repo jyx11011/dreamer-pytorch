@@ -39,7 +39,7 @@ class MPC_planner:
 
         if goal_weights is None:
             goal_weights = torch.cat((0.1*torch.ones(dynamics._stoch_size, dtype=self._dtype),
-                                    torch.ones(dynamics._deter_size, dtype=self._dtype)))
+                           10*torch.ones(dynamics._deter_size,dtype=self._dtype)),dim=0)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
