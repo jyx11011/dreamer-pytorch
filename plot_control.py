@@ -1,6 +1,7 @@
 import os
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 from dreamer.utils.configs import configs,load_configs,attributes
 
 def print_configs(configs):
@@ -31,8 +32,15 @@ if __name__=='__main__':
     while os.path.exists(os.path.join(path, 'iter_' + str(i)+'.npz')):
         f=os.path.join(path, 'iter_' + str(i)+'.npz')
         data=np.load(f,allow_pickle=True)
-        print(data['observations'])
-        print(data['actions'])
+        f, s = plt.subplots(1,2)
+        pos=list(map(lambda x: x['position'][0], data['observations']))
+        s[0].plot(pos)
+        theta=list(map(lambda x:np.arctan(x['position'][2]/x['position'][1]) , data['observations']))
+        s[1].plot(theta)
+        print(len(data['observations']))
+        p=os.path.join(path, 'iter_'+str(i)+'plt.png') 
+        plt.savefig(p,bbox_inches='tight')
+
         i+=1
 
 
