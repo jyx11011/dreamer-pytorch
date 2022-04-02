@@ -121,14 +121,14 @@ class Evaluator:
 
             feat = get_feat(post)
             post_pred = model.observation_decoder(feat).mean
-
+            
+            reward_pred = model.reward_model(feat)
             prev_state = model.get_state_representation(observations[t-1])
             prior = model.rollout.rollout_transition(T-t, actions[t:], prev_state)
             feat = get_feat(prior)
             
             image_pred = torch.cat((post_pred[:t]
                          ,model.observation_decoder(feat).mean))
-            reward_pred = model.reward_model(feat)
         diff=torch.abs(observations[:]-image_pred)
         img_p=np.clip((np.array(image_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_post=np.clip((np.array(post_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
@@ -141,13 +141,15 @@ class Evaluator:
 
         print(torch.sum(torch.where(diff>0.01,1,0)))
 
-        rp=np.array(reward_pred.mean.squeeze(1))
-        print(reward_pred.mean, reward)
-
-        plt.plot(rp)
-        plt.plot(reward)
-        
-        plt.savefig('reward.png')
+        rp=np.array(reward_pred.mean.squeeze())
+        print(rp, reward)
+        plt.clf()
+        plt.plot(rp,label='reward_pred')
+        plt.plot(reward,label='true reward')
+        plt.legend(loc="lower left")
+        plt.xlabel('timestep')
+        plt.ylabel('reward')
+        plt.savefig('reward.png',bbox_inches='tight')
         '''
         for i in range(T):
             print(i)
