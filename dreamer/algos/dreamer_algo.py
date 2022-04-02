@@ -17,7 +17,8 @@ from dreamer.utils.module import get_parameters, FreezeParameters
 torch.autograd.set_detect_anomaly(True)  # used for debugging gradients
 
 loss_info_fields = ['model_loss', 'prior_entropy', 'post_entropy', 'divergence',
-                    'image_loss', 'pcont_loss']
+                    'image_loss', 
+                    'pcont_loss']
 LossInfo = namedarraytuple('LossInfo', loss_info_fields)
 OptInfo = namedarraytuple("OptInfo",
                           ['loss', 'grad_norm_model'] + loss_info_fields)
@@ -174,7 +175,8 @@ class Dreamer(RlAlgorithm):
         model = self.agent.model
 
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
-        action = samples.all_action[1:]
+        last_obs=samples.all_observation[-1]
+        action = samples.all_action[:-1]
         done = samples.done
         done = done.unsqueeze(2)
 
@@ -188,6 +190,7 @@ class Dreamer(RlAlgorithm):
 
         # normalize image
         observation = observation.type(self.type) / 255.0 - 0.5
+        last_obs = last_obs.unsqueeze(0).type(self.type) / 255.0 - 0.5
         # embed the image
         embed = model.observation_encoder(observation)
 

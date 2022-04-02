@@ -10,7 +10,7 @@ attributes=['action_repeat',
 
 class Configs:
     def __init__(self, args = None):
-        self.action_repeat=2
+        self.action_repeat=5
 
         self.model_lr=1e-3
 
@@ -18,8 +18,8 @@ class Configs:
         self.deterministic_size=200
         self.hidden_size=200
 
-        self.timesteps=12
-        self.iter=50
+        self.timesteps=15
+        self.iter=20
         self.max_linesearch_iter=20
         self.linesearch_decay=0.2
         self.eps=1e-6
