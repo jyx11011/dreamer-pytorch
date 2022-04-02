@@ -86,13 +86,12 @@ class Evaluator:
         self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
-        eval_goal()
         logger.log("\nStart evaluating model")
         self.eval_goal()
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
         action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
-        reward = None
+        reward = []
         actions = [torch.zeros(1,1)]
         tot=0
         for t in range(T):
@@ -107,6 +106,7 @@ class Evaluator:
             obs, r, d, env_info = self.env.step(action)
             observation = torch.tensor(obs)
             observations.append(observation)
+            reward.append(r)
 
         img=np.clip(np.stack(observations[:-1]).transpose((0,2,3,1)).astype(np.uint8),0,255)
         
@@ -142,7 +142,7 @@ class Evaluator:
         print(torch.sum(torch.where(diff>0.01,1,0)))
 
         rp=np.array(reward_pred.mean.squeeze(1))
-        print(reward_pred.mean.squeeze(1), reward)
+        print(reward_pred.mean, reward)
 
         plt.plot(rp)
         plt.plot(reward)
