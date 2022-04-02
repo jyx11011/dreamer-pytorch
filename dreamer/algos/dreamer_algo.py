@@ -17,8 +17,7 @@ from dreamer.utils.module import get_parameters, FreezeParameters
 torch.autograd.set_detect_anomaly(True)  # used for debugging gradients
 
 loss_info_fields = ['model_loss', 'prior_entropy', 'post_entropy', 'divergence',
-                    'image_loss', 
-                    'pcont_loss']
+                    'reward_loss', 'image_loss', 'pcont_loss']
 LossInfo = namedarraytuple('LossInfo', loss_info_fields)
 OptInfo = namedarraytuple("OptInfo",
                           ['loss', 'grad_norm_model'] + loss_info_fields)
@@ -98,6 +97,7 @@ class Dreamer(RlAlgorithm):
         model = self.agent.model
         self.model_modules = [model.observation_encoder,
                               model.observation_decoder,
+                              model.reward_model,
                               model.representation,
                               model.transition]
         if self.use_pcont:
@@ -157,7 +157,6 @@ class Dreamer(RlAlgorithm):
                 if hasattr(opt_info, field):
                     getattr(opt_info, field).append(getattr(loss_info, field).item())
 
-        self.agent.model.update_mpc_planner()
         if itr>=200000 and itr % self.evaluate_every == 0:
             self.evaluator.ctrl(itr)
         return opt_info
@@ -177,6 +176,9 @@ class Dreamer(RlAlgorithm):
         observation = samples.all_observation[:-1]  # [t, t+batch_length+1] -> [t, t+batch_length]
         last_obs=samples.all_observation[-1]
         action = samples.all_action[:-1]
+        reward = samples.all_reward[:-1] 
+ # [t-1, t+batch_length] -> [t, t+batch_length]
+        reward = reward.unsqueeze(2)
         done = samples.done
         done = done.unsqueeze(2)
 
@@ -206,6 +208,8 @@ class Dreamer(RlAlgorithm):
         feat = get_feat(post)
         image_pred = model.observation_decoder(feat)
         image_loss = -torch.mean(image_pred.log_prob(observation))
+        reward_pred = model.reward_model(feat)
+        reward_loss = -torch.mean(reward_pred.log_prob(reward))
         pcont_loss = torch.tensor(0.)  # placeholder if use_pcont = False
         if self.use_pcont:
             pcont_pred = model.pcont(feat)
@@ -215,7 +219,7 @@ class Dreamer(RlAlgorithm):
         post_dist = get_dist(post)
         div = torch.mean(torch.distributions.kl.kl_divergence(post_dist, prior_dist))
         div = torch.max(div, div.new_full(div.size(), self.free_nats))
-        model_loss = self.kl_scale * div + image_loss
+        model_loss = self.kl_scale * div + reward_loss + image_loss
         if self.use_pcont:
             model_loss += self.pcont_scale * pcont_loss
 
@@ -262,7 +266,7 @@ class Dreamer(RlAlgorithm):
         with torch.no_grad():
             prior_ent = torch.mean(prior_dist.entropy())
             post_ent = torch.mean(post_dist.entropy())
-            loss_info = LossInfo(model_loss, prior_ent, post_ent, div, image_loss,
+            loss_info = LossInfo(model_loss, prior_ent, post_ent, div, reward_loss, image_loss,
                                  pcont_loss)
 
             if self.log_video:

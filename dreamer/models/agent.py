@@ -6,9 +6,10 @@ from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.tensor import infer_leading_dims, restore_leading_dims, to_onehot, from_onehot
 
 from dreamer.models.observation import ObservationDecoder, ObservationEncoder
+from dreamer.models.dense import DenseModel
 from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, RSSMRollout, get_feat
 
-from dreamer.models.mpc_planner import MPC_planner, load_goal_state
+from dreamer.models.mpc_planner import MPC_planner
 
 from dreamer.utils.configs import configs
 from dreamer.utils.module import get_parameters, FreezeParameters
@@ -25,6 +26,9 @@ class AgentModel(nn.Module):
             use_pcont=False,
             pcont_layers=configs.stochastic_size,
             pcont_hidden=configs.deterministic_size,
+            reward_shape=(1,),
+            reward_layers=3,
+            reward_hidden=300,
             **kwargs,
     ):
         super().__init__()
@@ -39,22 +43,18 @@ class AgentModel(nn.Module):
                                                  deterministic_size, hidden_size)
         self.rollout = RSSMRollout(self.representation, self.transition)
         feature_size = stochastic_size + deterministic_size
+        self.reward_model = DenseModel(feature_size, reward_shape, reward_layers, reward_hidden)
         self.action_size = output_size
         self.dtype = dtype
         
-        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
+        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition, self.reward_model.model)
         domain=kwargs.get("domain")
         task=kwargs.get("task")
-        self.goal_state = load_goal_state(dtype, domain=domain, task=task)
-        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
         self.stochastic_size = stochastic_size
         self.deterministic_size = deterministic_size
         if use_pcont:
             self.pcont = DenseModel(feature_size, (1,), pcont_layers, pcont_hidden, dist='binary')
         self._mode='sample'
-
-        if kwargs.get("cuda_idx") is not None:
-            self.goal_state = self.goal_state.to('cuda:'+str(kwargs["cuda_idx"]))
 
     def set_mode(self,mode):
         self._mode=mode
@@ -72,7 +72,8 @@ class AgentModel(nn.Module):
             action = torch.rand(*prev_action.shape) * 2 - 1
         else:
             action = self.policy(state)
-        return action, state
+        reward = self.reward_model(get_feat(state))
+        return action, state, reward
 
     def policy(self, state: RSSMState):
         feat = get_feat(state)
@@ -126,15 +127,6 @@ class AgentModel(nn.Module):
     def forward(self, observation: torch.Tensor, prev_action: torch.Tensor = None, prev_state: RSSMState = None):
         return_spec = ModelReturnSpec(None, None)
         raise NotImplementedError()
-
-    def zero_action(self, obs):
-        with torch.no_grad():
-            state = self.get_state_representation(obs)
-            feat = get_feat(state)
-        return feat
-
-    def update_mpc_planner(self):
-        self.mpc_planner.set_goal_state(self.zero_action(self.goal_state))
 
     def reset(self):
         self.mpc_planner.reset()
