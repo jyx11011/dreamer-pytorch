@@ -3,7 +3,7 @@ import os
 
 attributes=['action_repeat', 
             'model_lr', 
-            'stochastic_size', 'deterministic_size', 'hiddent_size', 
+            'stochastic_size', 'deterministic_size', 'hidden_size', 
             'timesteps', 'iter', 'max_linesearch_iter', 'linesearch_decay',
             'eps', 'detach_unconverged', 'backprop', 'delta_u',
             'eval_buffer_size']

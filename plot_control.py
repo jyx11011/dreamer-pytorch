@@ -29,17 +29,23 @@ if __name__=='__main__':
     load_configs(load_dir=path)
     print_configs(configs)
     i=0
+
+    
     while os.path.exists(os.path.join(path, 'iter_' + str(i)+'.npz')):
         f=os.path.join(path, 'iter_' + str(i)+'.npz')
         data=np.load(f,allow_pickle=True)
         f, s = plt.subplots(1,2)
         pos=list(map(lambda x: x['position'][0], data['observations']))
-        s[0].plot(pos)
+        s[0].plot(pos,x)
+        s[0].xlabel('Timestep')
+        s[0].ylabel('x position')
         theta=list(map(lambda x:np.arctan(x['position'][2]/x['position'][1]) , data['observations']))
         s[1].plot(theta)
+        s[1].ylim([-np.pi, np.pi])
+        s[1].xlabel('Timesteps')
+        s[1].ylabel('theta')
         print(len(data['observations']))
         p=os.path.join(path, 'iter_'+str(i)+'plt.png') 
-        plt.savefig(p,bbox_inches='tight')
 
         i+=1
 
