@@ -11,20 +11,21 @@ from dreamer.models.rnns import RSSMState, RSSMRepresentation, RSSMTransition, R
 
 from dreamer.models.mpc_planner import MPC_planner
 
+from dreamer.utils.configs import configs
 from dreamer.utils.module import get_parameters, FreezeParameters
 
 class AgentModel(nn.Module):
     def __init__(
             self,
             action_shape,
-            stochastic_size=30,
-            deterministic_size=200,
-            hidden_size=200,
+            stochastic_size=configs.stochastic_size,
+            deterministic_size=configs.deterministic_size,
+            hidden_size=configs.hidden_size,
             image_shape=(3, 64, 64),
             dtype=torch.float,
             use_pcont=False,
-            pcont_layers=10,
-            pcont_hidden=5,
+            pcont_layers=configs.stochastic_size,
+            pcont_hidden=configs.deterministic_size,
             reward_shape=(1,),
             reward_layers=3,
             reward_hidden=300,

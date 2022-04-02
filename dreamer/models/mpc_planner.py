@@ -5,19 +5,21 @@ import torch
 import torch.autograd
 import torch.nn.functional as tf
 from mpc import mpc
+from dreamer.utils.configs import configs
 
+torch.manual_seed(1)
 class Dynamics(torch.nn.Module):
     def __init__(self, dynamics):
         super(Dynamics, self).__init__()
-        self._dynamics=dynamics
+        self.dynamics=dynamics
 
     def forward(self, state, action):
-        stoch, deter = torch.split(state, [self._dynamics._stoch_size, self._dynamics._deter_size], dim=-1)
-        rnn_input = self._dynamics._rnn_input_model(torch.cat([action, stoch], dim=-1))
-        deter_state = self._dynamics._cell(rnn_input, deter)
-        mean, std = torch.chunk(self._dynamics._stochastic_prior_model(deter_state), 2, dim=-1)
+        stoch, deter = torch.split(state, [self.dynamics._stoch_size, self.dynamics._deter_size], dim=-1)
+        rnn_input = self.dynamics._rnn_input_model(torch.cat([action, stoch], dim=-1))
+        deter_state = self.dynamics._cell(rnn_input, deter)
+        mean, std = torch.chunk(self.dynamics._stochastic_prior_model(deter_state), 2, dim=-1)
         std = tf.softplus(std) + 0.1
-        dist = self._dynamics._dist(mean, std)
+        dist = self.dynamics._dist(mean, std)
         stoch_state = dist.rsample()
         return torch.cat((stoch_state, deter_state), dim=-1)
 
@@ -33,13 +35,12 @@ class PendulumCost(torch.nn.Module):
         return  -10*sc + 0.001 * torch.mul(u,u)
 
 class MPC_planner:
-    def __init__(self, nx, nu, dynamics, reward,
-            timesteps=50,
-            goal_weights=None, ctrl_penalty=0.001, iter=30,
+    def __init__(self, nx, nu, dynamics,
+            goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
-        self._timesteps=timesteps
+        self._timesteps=configs.timesteps
         self._u_init = None
-        self._iter = iter
+        self._iter = configs.iter
         self._nx = nx
         self._nu = nu
         self._action_low = action_low
@@ -56,8 +57,10 @@ class MPC_planner:
         if num > self._timesteps:
             num = self._timesteps
         n_batch = state.shape[0]
-        #self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
+        if self._u_init is None:
+            self._u_init=torch.rand(self._timesteps, n_batch, self._nu)*2-1
         state = torch.clone(state)
+
         with torch.enable_grad():
             ctrl = mpc.MPC(self._nx, self._nu, self._timesteps, 
                         u_lower=self._action_low * torch.ones(self._timesteps, n_batch, self._nu,device=state.device), 
@@ -65,14 +68,14 @@ class MPC_planner:
                         lqr_iter=self._iter, 
                         n_batch=n_batch,
                         u_init=self._u_init,
-                        max_linesearch_iter=10,
-                        linesearch_decay=0.2,
+                        max_linesearch_iter=configs.max_linesearch_iter,
+                        linesearch_decay=configs.linesearch_decay,
                         exit_unconverged=False, 
-                        detach_unconverged = False, 
-                        backprop=False,
+                        detach_unconverged = configs.detach_unconverged, 
+                        backprop=configs.backprop,
                         verbose=1,
-                        eps=1e-2,
-                        #delta_u=1,
+                        eps=configs.eps,
+		        delta_u=configs.delta_u,
                         grad_method=mpc.GradMethods.AUTO_DIFF)
             nominal_states, nominal_actions, nominal_objs = ctrl(state, self._cost, self._dynamics)
         action = nominal_actions[:num]
