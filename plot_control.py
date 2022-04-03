@@ -38,7 +38,7 @@ if __name__=='__main__':
         pos=list(map(lambda x: x['position'][0], data['observations']))
         s[0].plot(pos)
         s[0].set(xlabel='Timestep',ylabel='x')
-        theta=list(map(lambda x:np.arctan(x['position'][2]/x['position'][1]) , data['observations']))
+        theta=list(map(lambda x:np.arctan2(x['position'][2],x['position'][1]) , data['observations']))
         s[1].plot(theta)
         s[1].set_ylim([-np.pi, np.pi])
         s[1].set(xlabel='Timesteps',ylabel='theta')
