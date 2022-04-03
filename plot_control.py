@@ -47,8 +47,8 @@ if __name__=='__main__':
         i+=1
     p=os.path.join(path, 'plt.png')
     a=['timesteps', 'action_repeat', 'stochastic_size_state_size', 'deterministic_size'] 
-    t=''.join([x+': '+getattr(configs,x) for x in a])
-    plt.title(t)
+    t=', '.join([x+': '+getattr(configs,x) for x in a])
+    s[0].title.set_text(t)
     plt.show()
     plt.savefig(p)
 
