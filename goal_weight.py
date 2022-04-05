@@ -4,10 +4,11 @@ import torch.nn as nn
 from torch.autograd import grad
 
 class WeightModel():
-    def __init__(self, size: int, goal_state, lr=0.001):
+    def __init__(self, size: int, goal_state, device, lr=0.001):
         super().__init__()
         self.goal_state=torch.clone(goal_state).requires_grad_()
-        self.w=torch.ones(size,dtype=torch.float,requires_grad=True)
+        self.w=torch.ones(size,dtype=torch.float,requires_grad=True).to(device)
+
 
     def grad(self, state, reward):
         state=torch.clone(state).requires_grad_()
@@ -40,11 +41,10 @@ class LearnWeight:
         self.agent = agent
         self.cuda_idx = cuda_idx
         self.game = game
-        self.action_dim=env.spaces.action.shape[0]
         self.obs=None
         self.reward=None
         self.device=torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
-        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, self.goal(),lr=lr)
+        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, self.goal(),device=self.device,lr=lr)
     
     def goal(self):
         g=load_goal_state(torch.float).to(self.device)
@@ -85,6 +85,7 @@ class LearnWeight:
             else:
                 self.obs=torch.cat((self.obs, feat))
                 self.reward=torch.cat((self.reward, reward))
+        self.obs=self.reward.to(self.device)
     
     def train(self, e=100):
         print("Start training")
