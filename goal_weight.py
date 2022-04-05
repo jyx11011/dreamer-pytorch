@@ -151,10 +151,11 @@ if __name__ == "__main__":
     parser.add_argument('--T', help='', type=int, default=100)
     parser.add_argument('--lr', help='', type=float, default=0.001)
     parser.add_argument('--data',type=str,default='data')
+    parser.add_argument('--w',type=int,default=0)
     args = parser.parse_args()
     data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data+'.npz')
     
-    i = 0
+    i = args.w
     log_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight')
     while os.path.exists(os.path.join(log_dir, 'w_' + str(i)+'.npy')):
         i += 1
