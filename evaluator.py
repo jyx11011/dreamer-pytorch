@@ -229,7 +229,7 @@ if __name__ == "__main__":
     
     configs.save(log_dir)
 
-    wpath=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight',args.w+'.npz')
+    wpath=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight',args.w+'.npy')
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,

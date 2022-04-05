@@ -12,7 +12,7 @@ class WeightModel():
 
     def grad(self, states, rewards):
         states=torch.clone(states).requires_grad_()
-        diff=torch.mul(self.w, states)-self.goal_state
+        diff=torch.mul(self.w, states-self.goal_state)
         e=torch.sum(torch.mul(diff, diff),dim=1)
         loss=nn.MSELoss(reduction='mean')(e,rewards)
         dloss_dw = grad(outputs=loss, inputs=self.w)
@@ -96,6 +96,7 @@ class LearnWeight:
 
     def train(self, log_file,e=100):
         print("Start training")
+        self.reward=2-self.reward
         for i in tqdm(range(e)):
             n=len(self.obs)
             perm=torch.randperm(n)
@@ -104,7 +105,7 @@ class LearnWeight:
                 loss=self.w.grad(self.obs[perm[j:j+100]], self.reward[perm[j:j+100]])
                 s+=loss
             print(s)
-        np.save(log_file,self.w.w.cpu())
+        np.save(log_file,self.w.w.detach().cpu())
         
         
 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     
     i = 0
     log_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight')
-    while os.path.exists(os.path.join(log_dir, 'w_' + str(i))):
+    while os.path.exists(os.path.join(log_dir, 'w_' + str(i)+'.npy')):
         i += 1
     log_file=os.path.join(log_dir,'w_'+str(i))
     print(log_file)
