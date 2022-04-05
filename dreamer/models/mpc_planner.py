@@ -43,6 +43,7 @@ class MPC_planner:
                 goal_weights = torch.tensor(np.load(wpath)).type(torch.float)
             else:
                 goal_weights=torch.ones(nx,dtype=torch.float)
+            print(goal_weights)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,

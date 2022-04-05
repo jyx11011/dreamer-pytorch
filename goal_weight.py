@@ -96,7 +96,7 @@ class LearnWeight:
 
     def train(self, log_file,e=100):
         print("Start training")
-        self.reward=2-self.reward
+        self.reward=(2-self.reward)*10
         for i in tqdm(range(e)):
             n=len(self.obs)
             perm=torch.randperm(n)
@@ -112,7 +112,7 @@ class LearnWeight:
 
 def train(cuda_idx=None, game="cartpole_balance",path=None,
         B=1000, T=100, lr=0.001,data_path=None,
-        log_file=None):
+        log_file=None,e=100):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
@@ -138,7 +138,7 @@ def train(cuda_idx=None, game="cartpole_balance",path=None,
         lw.collect(data_path,B=B,T=T)
     else:
         lw.load(data_path)
-    lw.train(log_file)   
+    lw.train(log_file,e=e)   
     
 
 
@@ -152,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', help='', type=float, default=0.001)
     parser.add_argument('--data',type=str,default='data')
     parser.add_argument('--w',type=int,default=0)
+    parser.add_argument('--e',type=int,default=100)
     args = parser.parse_args()
     data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data+'.npz')
     
@@ -163,4 +164,4 @@ if __name__ == "__main__":
     print(log_file)
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
             B=args.B, T=args.T,lr=args.lr,data_path=data_path,
-            log_file=log_file)
+            log_file=log_file,e=args.e)
