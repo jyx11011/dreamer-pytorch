@@ -131,9 +131,9 @@ if __name__ == "__main__":
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
     parser.add_argument('--model', help='model path', type=str, default=None)
-    parser.add_argument('--B', help='', type=int, default=None)
-    parser.add_argument('--T', help='', type=int, default=None)
-    parser.add_argument('--lr', help='', type=float, default=None)
+    parser.add_argument('--B', help='', type=int, default=1000)
+    parser.add_argument('--T', help='', type=int, default=100)
+    parser.add_argument('--lr', help='', type=float, default=0.001)
     
     args = parser.parse_args()
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
