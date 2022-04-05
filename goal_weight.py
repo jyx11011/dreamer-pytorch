@@ -53,7 +53,7 @@ class LearnWeight:
             feat = get_feat(state)
         return feat[0]
 
-    def collect(self, B=1000,T=100):
+    def collect(self, data_path,B=1000,T=100):
         model = self.agent.model
         self.obs=None
         self.reward=None
@@ -86,7 +86,14 @@ class LearnWeight:
                 self.obs=torch.cat((self.obs, feat))
                 self.reward=torch.cat((self.reward, reward))
         self.reward=self.reward.to(self.device)
-    
+        np.savez(data_path, obs=self.obs, reward=self.reward)
+
+
+    def load(self, path):
+         data=np.load(path,allow_pickle=True)
+         self.obs=torch.tensor(data['obs']).to(self.device)
+         self.reward=torch.tensor(data['reward']).to(self.device)
+
     def train(self, e=100):
         print("Start training")
         for i in range(e):
@@ -100,7 +107,7 @@ class LearnWeight:
 
 
 def train(cuda_idx=None, game="cartpole_balance",path=None,
-        B=1000, T=100, lr=0.001):
+        B=1000, T=100, lr=0.001,data_path=None):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
@@ -122,7 +129,10 @@ def train(cuda_idx=None, game="cartpole_balance",path=None,
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
     lw=LearnWeight(agent, env,cuda_idx=cuda_idx,lr=lr)
-    lw.collect(B=B,T=T)
+    if not os.path.exists(data_path):
+        lw.collect(data_path,B=B,T=T)
+    else:
+        lw.load(data_path)
     lw.train()   
     
 
@@ -137,5 +147,8 @@ if __name__ == "__main__":
     parser.add_argument('--lr', help='', type=float, default=0.001)
     
     args = parser.parse_args()
+    
+    data_path=os.path.join(os.path.dirname(__file__), 'data.npy')
+
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
-            B=args.B, T=args.T,lr=args.lr)
+            B=args.B, T=args.T,lr=args.lr,data_path=data_path)
