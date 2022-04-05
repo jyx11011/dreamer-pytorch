@@ -7,16 +7,16 @@ class WeightModel():
     def __init__(self, size: int, goal_state, device, lr=0.001):
         super().__init__()
         self.goal_state=torch.clone(goal_state).requires_grad_()
-        self.w=torch.ones(size,dtype=torch.float,requires_grad=True).to(device)
-
+        self.w=torch.ones(size,dtype=torch.double,requires_grad=True).to(device)
+        self.lr=lr
 
     def grad(self, state, reward):
         state=torch.clone(state).requires_grad_()
         diff=torch.mul(self.w, state)-self.goal_state
-        e=torch.matmul(diff, diff.transpose())
-        loss=nn.MSELoss(e,reward)
+        e=torch.matmul(diff, diff.transpose(1,0))
+        loss=nn.MSELoss()(e,reward)
         dloss_dw = grad(outputs=loss, inputs=self.w)
-        self.w-=lr*dloss_dw
+        self.w-=self.lr*dloss_dw[0]
         return loss
 
 import datetime
@@ -85,7 +85,7 @@ class LearnWeight:
             else:
                 self.obs=torch.cat((self.obs, feat))
                 self.reward=torch.cat((self.reward, reward))
-        self.obs=self.reward.to(self.device)
+        self.reward=self.reward.to(self.device)
     
     def train(self, e=100):
         print("Start training")
