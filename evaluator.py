@@ -16,7 +16,7 @@ from dreamer.envs.normalize_actions import NormalizeActions
 from dreamer.envs.wrapper import make_wapper
 from dreamer.models.rnns import get_feat
 from dreamer.utils.configs import configs, load_configs
-
+from dreamer.models.mpc_planner import load_goal_state
 from rlpyt.utils.buffer import numpify_buffer, torchify_buffer
 from rlpyt.utils.logging import logger
 
@@ -69,21 +69,32 @@ class Evaluator:
             np.savez(log_path, observations=observations, actions=actions)
         logger.log("position: "f"{self.env.get_obs()}, reward: "f"{tot}")
 
-
-    def eval_model(self, T=20,rand=True,save=10):
+    def eval_goal(self):
+        goal=load_goal_state(torch.float)
+        with torch.no_grad():
+            state = self.agent.model.get_state_representation(goal)
+            feat = get_feat(state)
+            pred=self.agent.model.observation_decoder(feat).mean
+        pred=np.clip((np.array(pred)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
+        print(pred.shape)
+        show(pred, name='goal_pred')
+        goal=np.clip((np.array(goal)+0.5)*255,0,255).transpose((0,2,3,1)).astype(np.uint8)
+        show(goal, name='goal')
+    def eval_model(self, T=20,rand=True,save=10,t=5):
         model = self.agent.model
         self.agent.reset()
         self.agent.eval_mode(0)
         self.agent.model.update_mpc_planner()
         device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
 
+        eval_goal()
         logger.log("\nStart evaluating model")
-
+        self.eval_goal()
         observation = torchify_buffer(self.env.reset()).type(torch.float)
         observations = [observation]
         action = torch.zeros(1, self.action_dim, device=self.agent.device).to(device)
         reward = None
-        actions = []
+        actions = [torch.zeros(1,1)]
         tot=0
         for t in range(T):
             observation = observation.unsqueeze(0).to(device)
@@ -105,16 +116,18 @@ class Evaluator:
         actions = torch.stack(actions, dim=0).to(device)
         with torch.no_grad():
             embed = model.observation_encoder(observations)
-            prev_state = model.get_state_representation(observations[0])
-            prior = model.rollout.rollout_transition(T-1, actions[:-1], prev_state)
-            feat = get_feat(prior)
-            image_pred = torch.cat((observations[0][0].unsqueeze(0).unsqueeze(1)
-                         ,model.observation_decoder(feat).mean))
+            
             prev_state=model.representation.initial_state(1, device=device, dtype=torch.float)
             _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
 
             feat = get_feat(post)
             post_pred = model.observation_decoder(feat).mean
+
+            prev_state = model.get_state_representation(observations[t-1])
+            prior = model.rollout.rollout_transition(T-t, actions[t:], prev_state)
+            feat = get_feat(prior)
+            image_pred = torch.cat((post_pred[:t]
+                         ,model.observation_decoder(feat).mean))
         diff=torch.abs(observations[:]-image_pred)
         img_p=np.clip((np.array(image_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
         img_post=np.clip((np.array(post_pred)+0.5)*255,0,255).squeeze(1).transpose((0,2,3,1)).astype(np.uint8)
@@ -133,7 +146,7 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None,rand=True,T=100, min_cos=0.98):
+        save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5,img=10):
     domain, task = game.split('_')
     
     domain, task = game.split('_',1)
@@ -158,7 +171,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
     evaluator=Evaluator(agent, env, cuda_idx=cuda_idx,game=game,T=T,min_cos=min_cos)
     
     if eval_model is not None:
-        evaluator.eval_model(T=eval_model,rand=rand)
+        evaluator.eval_model(T=eval_model,rand=rand,t=t,save=img)
     else:
         for i in tqdm(range(itr)):
             path = None
@@ -184,6 +197,9 @@ if __name__ == "__main__":
     parser.add_argument('--run-ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--load-model-path', help='load model from path', type=str)  # path to params.pkl
     parser.add_argument('--model', help='evaluate model', type=int, default=None)
+    parser.add_argument('--t', help='evaluate model', type=int, default=5)
+    parser.add_argument('--img', help='evaluate model', type=int, default=10)
+    
     parser.add_argument('--itr', help='total iter', type=int,default=10)  # path to params.pkl
 
     parser.add_argument('--rand', help='rand action', type=bool,default=True)  # path to params.pkl
@@ -216,10 +232,12 @@ if __name__ == "__main__":
         game=args.game,
         itr=args.itr,
         eval_model=args.model,
+        t=args.t,
         save=args.save,
         log_dir=log_dir,
         T=args.T,
         min_cos=args.min_cos,
-        rand=args.rand
+        rand=args.rand,
+        img=args.img
         )
  
