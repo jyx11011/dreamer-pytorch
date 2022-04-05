@@ -6,15 +6,15 @@ from torch.autograd import grad
 class WeightModel():
     def __init__(self, size: int, goal_state, device, lr=0.001):
         super().__init__()
-        self.goal_state=torch.clone(goal_state).requires_grad_()
+        self.goal_state=torch.clone(goal_state).squeeze(0).requires_grad_()
         self.w=torch.ones(size,dtype=torch.double,requires_grad=True).to(device)
         self.lr=lr
 
-    def grad(self, state, reward):
-        state=torch.clone(state).requires_grad_()
+    def grad(self, states, rewards):
+        states=torch.clone(states).requires_grad_()
         diff=torch.mul(self.w, state)-self.goal_state
-        e=torch.matmul(diff, diff.transpose(1,0))[0][0]
-        loss=nn.MSELoss()(e,reward)
+        e=torch.sum(torch.mul(diff, diff),dim=1)
+        loss=nn.MSELoss(reduction='mean')(e,rewards)
         dloss_dw = grad(outputs=loss, inputs=self.w)
         self.w-=self.lr*dloss_dw[0]
         return loss
@@ -98,9 +98,11 @@ class LearnWeight:
     def train(self, e=100):
         print("Start training")
         for i in tqdm(range(e)):
+            n=len(self.obs)
+            perm=torch.randperm(n)
             s=0
-            for j in range(len(self.obs)):
-                loss=self.w.grad(self.obs[j], self.reward[j])
+            for j in range(0,n,100):
+                loss=self.w.grad(self.obs[j:j+100], self.reward[j:j+100])
                 s+=loss
             print(s)
             print(self.w.w)
@@ -146,8 +148,9 @@ if __name__ == "__main__":
     parser.add_argument('--B', help='', type=int, default=1000)
     parser.add_argument('--T', help='', type=int, default=100)
     parser.add_argument('--lr', help='', type=float, default=0.001)
-    
+    parser.add_argument('--data',type=str,default='data.npy')
     args = parser.parse_args()
-    data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.npy')
+    data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data)
+    
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
             B=args.B, T=args.T,lr=args.lr,data_path=data_path)
