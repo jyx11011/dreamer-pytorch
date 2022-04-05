@@ -13,7 +13,7 @@ class WeightModel():
     def grad(self, state, reward):
         state=torch.clone(state).requires_grad_()
         diff=torch.mul(self.w, state)-self.goal_state
-        e=torch.matmul(diff, diff.transpose(1,0))
+        e=torch.matmul(diff, diff.transpose(1,0))[0][0]
         loss=nn.MSELoss()(e,reward)
         dloss_dw = grad(outputs=loss, inputs=self.w)
         self.w-=self.lr*dloss_dw[0]
@@ -86,7 +86,8 @@ class LearnWeight:
                 self.obs=torch.cat((self.obs, feat))
                 self.reward=torch.cat((self.reward, reward))
         self.reward=self.reward.to(self.device)
-        np.savez(data_path, obs=self.obs, reward=self.reward)
+        print(data_path)
+        np.savez(data_path, obs=self.obs.cpu(), reward=self.reward.cpu())
 
 
     def load(self, path):
@@ -102,7 +103,7 @@ class LearnWeight:
                 loss=self.w.grad(self.obs[j], self.reward[j])
                 s+=loss
             print(s)
-        print(self.w.w)
+            print(self.w.w)
         
 
 
@@ -147,8 +148,6 @@ if __name__ == "__main__":
     parser.add_argument('--lr', help='', type=float, default=0.001)
     
     args = parser.parse_args()
-    
-    data_path=os.path.join(os.path.dirname(__file__), 'data.npy')
-
+    data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.npy')
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
             B=args.B, T=args.T,lr=args.lr,data_path=data_path)
