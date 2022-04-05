@@ -12,7 +12,7 @@ class WeightModel():
 
     def grad(self, states, rewards):
         states=torch.clone(states).requires_grad_()
-        diff=torch.mul(self.w, state)-self.goal_state
+        diff=torch.mul(self.w, states)-self.goal_state
         e=torch.sum(torch.mul(diff, diff),dim=1)
         loss=nn.MSELoss(reduction='mean')(e,rewards)
         dloss_dw = grad(outputs=loss, inputs=self.w)
@@ -78,7 +78,7 @@ class LearnWeight:
                 embed = model.observation_encoder(observations)
                 prev_state=model.representation.initial_state(1, device=self.device, dtype=torch.float)
                 _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
-                feat = get_feat(post).squeeze(0)
+                feat = get_feat(post).squeeze()
             if self.obs is None:
                 self.obs=feat
                 self.reward=reward
@@ -86,8 +86,7 @@ class LearnWeight:
                 self.obs=torch.cat((self.obs, feat))
                 self.reward=torch.cat((self.reward, reward))
         self.reward=self.reward.to(self.device)
-        print(data_path)
-        np.savez(data_path, obs=self.obs.cpu(), reward=self.reward.cpu())
+        np.savez(data_path[:-4], obs=self.obs.cpu(), reward=self.reward.cpu())
 
 
     def load(self, path):
@@ -148,9 +147,9 @@ if __name__ == "__main__":
     parser.add_argument('--B', help='', type=int, default=1000)
     parser.add_argument('--T', help='', type=int, default=100)
     parser.add_argument('--lr', help='', type=float, default=0.001)
-    parser.add_argument('--data',type=str,default='data.npy')
+    parser.add_argument('--data',type=str,default='data')
     args = parser.parse_args()
-    data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data)
+    data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data+'.npz')
     
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
             B=args.B, T=args.T,lr=args.lr,data_path=data_path)
