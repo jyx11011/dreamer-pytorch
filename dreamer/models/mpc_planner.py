@@ -25,7 +25,7 @@ class Dynamics(torch.nn.Module):
 
 
 class MPC_planner:
-    def __init__(self, nx, nu, dynamics,
+    def __init__(self, nx, nu, dynamics,wpath,
             goal_weights=None, ctrl_penalty=0.001,
             action_low=-1.0, action_high=1.0):
         self._timesteps=configs.timesteps
@@ -37,9 +37,9 @@ class MPC_planner:
         self._action_high = action_high
         self._dtype=torch.float
 
+
         if goal_weights is None:
-            goal_weights = torch.cat((torch.ones(dynamics._stoch_size, dtype=self._dtype),
-                                    torch.ones(dynamics._deter_size, dtype=self._dtype)))
+            goal_weights = np.load(wpath)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,

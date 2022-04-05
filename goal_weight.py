@@ -94,22 +94,24 @@ class LearnWeight:
          self.obs=torch.tensor(data['obs']).to(self.device)
          self.reward=torch.tensor(data['reward']).to(self.device)
 
-    def train(self, e=100):
+    def train(self, log_file,e=100):
         print("Start training")
         for i in tqdm(range(e)):
             n=len(self.obs)
             perm=torch.randperm(n)
             s=0
             for j in range(0,n,100):
-                loss=self.w.grad(self.obs[j:j+100], self.reward[j:j+100])
+                loss=self.w.grad(self.obs[perm[j:j+100]], self.reward[perm[j:j+100]])
                 s+=loss
             print(s)
-            print(self.w.w)
+        np.save(log_file,self.w.w.cpu())
+        
         
 
 
 def train(cuda_idx=None, game="cartpole_balance",path=None,
-        B=1000, T=100, lr=0.001,data_path=None):
+        B=1000, T=100, lr=0.001,data_path=None,
+        log_file=log_file):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
@@ -135,7 +137,7 @@ def train(cuda_idx=None, game="cartpole_balance",path=None,
         lw.collect(data_path,B=B,T=T)
     else:
         lw.load(data_path)
-    lw.train()   
+    lw.train(log_file)   
     
 
 
@@ -151,5 +153,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data+'.npz')
     
+    i = 0
+    log_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight')
+    while os.path.exists(os.path.join(log_dir, 'w_' + str(i))):
+        i += 1
+    log_file=os.path.join(log_dir,'w_'+str(i))
+    print(log_file)
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
-            B=args.B, T=args.T,lr=args.lr,data_path=data_path)
+            B=args.B, T=args.T,lr=args.lr,data_path=data_path,
+            log_file=log_file)
