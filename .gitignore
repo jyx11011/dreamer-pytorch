@@ -136,3 +136,5 @@ rlpyt/
 .idea/
 
 ~$nal report.docx
+*.npz
+weight/

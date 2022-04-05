@@ -42,7 +42,7 @@ class AgentModel(nn.Module):
         self.action_size = output_size
         self.dtype = dtype
         
-        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition)
+        self.mpc_planner = MPC_planner(feature_size, output_size, self.transition,kwargs.get("wpath"))
         domain=kwargs.get("domain")
         task=kwargs.get("task")
         self.goal_state = load_goal_state(dtype, domain=domain, task=task)

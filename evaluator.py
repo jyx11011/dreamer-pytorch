@@ -146,7 +146,8 @@ class Evaluator:
         '''
 
 def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_model=None, 
-        save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5,img=10):
+        save=True, log_dir=None,rand=True,T=100, min_cos=0.98,t=5,img=10,
+        wpath=None):
     domain, task = game.split('_')
     
     domain, task = game.split('_',1)
@@ -164,7 +165,7 @@ def eval(load_model_path, cuda_idx=None, game="cartpole_balance",itr=10, eval_mo
 
     agent = DMCDreamerAgent(train_noise=0.3, eval_noise=0, expl_type="additive_gaussian",
                               expl_min=None, expl_decay=None, initial_model_state_dict=agent_state_dict,
-                               model_kwargs={"domain": domain, "task": task, "cuda_idx": cuda_idx})
+                               model_kwargs={"domain": domain, "task": task, "cuda_idx": cuda_idx, "wpath":wpath})
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
@@ -208,6 +209,7 @@ if __name__ == "__main__":
     parser.add_argument('--T', type=int, default=100)
 
     parser.add_argument('--min-cos', type=float, default=0.98)
+    parser.add_argument('--w', type=str, default='w_0')
     args = parser.parse_args()
 
     load_dir = os.path.dirname(args.load_model_path)
@@ -226,6 +228,8 @@ if __name__ == "__main__":
     os.mkdir(log_dir)
     
     configs.save(log_dir)
+
+    wpath=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight',args.w+'.npy')
     eval(
         args.load_model_path,
         cuda_idx=args.cuda_idx,
@@ -238,6 +242,7 @@ if __name__ == "__main__":
         T=args.T,
         min_cos=args.min_cos,
         rand=args.rand,
-        img=args.img
+        img=args.img,
+        wpath=wpath
         )
  
