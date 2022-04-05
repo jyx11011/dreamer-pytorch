@@ -35,7 +35,7 @@ from dreamer.utils.configs import configs, load_configs
 from dreamer.models.mpc_planner import load_goal_state
 
 class LearnWeight:
-    def __init__(self, agent, env, cuda_idx=None, game='cartpole_balance'):
+    def __init__(self, agent, env, cuda_idx=None, game='cartpole_balance',lr=0.001):
         self.env = env
         self.agent = agent
         self.cuda_idx = cuda_idx
@@ -44,7 +44,7 @@ class LearnWeight:
         self.obs=None
         self.reward=None
         self.device=torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
-        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, self.goal())
+        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, self.goal(),lr=lr)
     
     def goal(self):
         g=load_goal_state(torch.float).to(self.device)
@@ -53,11 +53,12 @@ class LearnWeight:
             feat = get_feat(state)
         return feat[0]
 
-    def collect(self, B=10000,T=100):
+    def collect(self, B=1000,T=100):
         model = self.agent.model
         self.obs=None
         self.reward=None
-        for b in range(B):
+        print("Start collecting data")
+        for b in tqdm(range(B)):
             observations=[]
             reward=[]
             actions=[torch.zeros(1,1)]
@@ -86,6 +87,7 @@ class LearnWeight:
                 self.reward=torch.cat((self.reward, reward))
     
     def train(self, e=100):
+        print("Start training")
         for i in range(e):
             s=0
             for j in range(len(self.obs)):
@@ -96,7 +98,8 @@ class LearnWeight:
         
 
 
-def train(cuda_idx=None, game="cartpole_balance",path=None):
+def train(cuda_idx=None, game="cartpole_balance",path=None,
+        B=1000, T=100, lr=0.001):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
@@ -117,8 +120,8 @@ def train(cuda_idx=None, game="cartpole_balance",path=None):
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    lw=LearnWeight(agent, env,cuda_idx=cuda_idx)
-    lw.collect()
+    lw=LearnWeight(agent, env,cuda_idx=cuda_idx,lr=lr)
+    lw.collect(B=B,T=T)
     lw.train()   
     
 
@@ -128,5 +131,10 @@ if __name__ == "__main__":
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
     parser.add_argument('--model', help='model path', type=str, default=None)
+    parser.add_argument('--B', help='', type=int, default=None)
+    parser.add_argument('--T', help='', type=int, default=None)
+    parser.add_argument('--lr', help='', type=float, default=None)
+    
     args = parser.parse_args()
-    train(game=args.game,cuda_idx=args.cuda_idx,path=args.model)
+    train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
+            B=args.B, T=args.T,lr=args.lr)
