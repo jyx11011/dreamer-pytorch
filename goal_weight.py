@@ -43,47 +43,47 @@ class LearnWeight:
         self.action_dim=env.spaces.action.shape[0]
         self.obs=None
         self.reward=None
-        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, goal())
-   
+        self.device=torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
+        self.w=WeightModel(configs.stochastic_size+configs.deterministic_size, self.goal())
+    
     def goal(self):
-        goal=load_goal_state(torch.float)
+        g=load_goal_state(torch.float).to(self.device)
         with torch.no_grad():
-            state = self.agent.model.get_state_representation(goal)
+            state = self.agent.model.get_state_representation(g)
             feat = get_feat(state)
-        return feat
+        return feat[0]
 
     def collect(self, B=10000,T=100):
         model = self.agent.model
-        device = torch.device("cuda:" + str(self.cuda_idx)) if self.cuda_idx is not None else torch.device("cpu")
         self.obs=None
         self.reward=None
         for b in range(B):
             observations=[]
             reward=[]
+            actions=[torch.zeros(1,1)]
             self.env.reset()
             for t in range(T):
-                observation = observation.unsqueeze(0).to(device)
                 action=torch.rand(1,1)*2-1
                 actions.append(action)
                 obs, r, d, env_info = self.env.step(action)
                 observation = torch.tensor(obs)
                 observations.append(observation)
                 reward.append(r)
-            reward=torch.tensor(reward)
-            observations = torch.stack(observations, dim=0).unsqueeze(1).to(device)
+            reward=torch.tensor(reward).to(self.device)
+            observations = torch.stack(observations, dim=0).unsqueeze(1).to(self.device)
             observations = observations.type(torch.float) / 255.0 - 0.5
-            actions = torch.stack(actions, dim=0).to(device)
+            actions = torch.stack(actions, dim=0).to(self.device)
             with torch.no_grad():
                 embed = model.observation_encoder(observations)
-                prev_state=model.representation.initial_state(1, device=device, dtype=torch.float)
+                prev_state=model.representation.initial_state(1, device=self.device, dtype=torch.float)
                 _, post = model.rollout.rollout_representation(T, embed, actions, prev_state)
                 feat = get_feat(post).squeeze(0)
             if self.obs is None:
                 self.obs=feat
                 self.reward=reward
             else:
-                self.obs=torch.cat(self.obs, feat)
-                self.reward=torch.cat(self.reward, reward)
+                self.obs=torch.cat((self.obs, feat))
+                self.reward=torch.cat((self.reward, reward))
     
     def train(self, e=100):
         for i in range(e):
@@ -102,7 +102,7 @@ def train(cuda_idx=None, game="cartpole_balance",path=None):
     if '_' in task:
         d,task=task.split('_')
         domain+='_'+d
-    params = torch.load(load_model_path)
+    params = torch.load(path)
     agent_state_dict = params.get('agent_state_dict')
     optimizer_state_dict = params.get('optimizer_state_dict')
     action_repeat = configs.action_repeat
@@ -117,7 +117,8 @@ def train(cuda_idx=None, game="cartpole_balance",path=None):
     env=factory_method(name=game)
     agent.initialize(env.spaces)
     agent.to_device(cuda_idx)
-    lw=LearnWeight(agent, env)
+    lw=LearnWeight(agent, env,cuda_idx=cuda_idx)
+    lw.collect()
     lw.train()   
     
 
@@ -126,6 +127,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--game', help='DMC game', default='cartpole_balance')
     parser.add_argument('--cuda-idx', help='cuda', type=int, default=None)
-    parser.add_argument('--model', help='model path', type=string, default=None)
+    parser.add_argument('--model', help='model path', type=str, default=None)
     args = parser.parse_args()
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model)
