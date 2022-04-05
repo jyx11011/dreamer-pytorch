@@ -7,7 +7,7 @@ class WeightModel():
     def __init__(self, size: int, goal_state, device, lr=0.001):
         super().__init__()
         self.goal_state=torch.clone(goal_state).squeeze(0).requires_grad_()
-        self.w=torch.ones(size,dtype=torch.double,requires_grad=True).to(device)
+        self.w=0.1*torch.ones(size,dtype=torch.double,requires_grad=True).to(device)
         self.lr=lr
 
     def grad(self, states, rewards):
@@ -96,13 +96,13 @@ class LearnWeight:
 
     def train(self, log_file,e=100):
         print("Start training")
-        self.reward=(2-self.reward)*10
+        self.reward=(2-self.reward)
         for i in tqdm(range(e)):
             n=len(self.obs)
             perm=torch.randperm(n)
             s=0
-            for j in range(0,n,100):
-                loss=self.w.grad(self.obs[perm[j:j+100]], self.reward[perm[j:j+100]])
+            for j in range(0,n,500):
+                loss=self.w.grad(self.obs[perm[j:j+500]], self.reward[perm[j:j+500]])
                 s+=loss
             print(s)
         np.save(log_file,self.w.w.detach().cpu())
