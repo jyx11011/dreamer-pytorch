@@ -111,7 +111,7 @@ class LearnWeight:
 
 def train(cuda_idx=None, game="cartpole_balance",path=None,
         B=1000, T=100, lr=0.001,data_path=None,
-        log_file=log_file):
+        log_file=None):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
