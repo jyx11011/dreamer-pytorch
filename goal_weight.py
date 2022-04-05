@@ -94,8 +94,11 @@ class LearnWeight:
          self.obs=torch.tensor(data['obs']).to(self.device)
          self.reward=torch.tensor(data['reward']).to(self.device)
 
-    def train(self, log_file,e=100):
+    def train(self, log_file,e=100,w_init=None):
         print("Start training")
+        if w_init is not None:
+            print(w_init)
+            self.w.w=w_init
         self.reward=(2-self.reward)
         for i in tqdm(range(e)):
             n=len(self.obs)
@@ -112,7 +115,7 @@ class LearnWeight:
 
 def train(cuda_idx=None, game="cartpole_balance",path=None,
         B=1000, T=100, lr=0.001,data_path=None,
-        log_file=None,e=100):
+        log_file=None,e=100,load=None):
     domain, task = game.split('_')
     domain, task = game.split('_',1)
     if '_' in task:
@@ -138,7 +141,11 @@ def train(cuda_idx=None, game="cartpole_balance",path=None,
         lw.collect(data_path,B=B,T=T)
     else:
         lw.load(data_path)
-    lw.train(log_file,e=e)   
+    if load is not None:
+        p=os.path.join(os.path.dirname(os.path.abspath(__file__)),'weight','w_'+str(load))
+        if os.path.exists(p):
+            w=np.load(p)
+    lw.train(log_file,e=e,w_init=w)   
     
 
 
@@ -153,6 +160,7 @@ if __name__ == "__main__":
     parser.add_argument('--data',type=str,default='data')
     parser.add_argument('--w',type=int,default=0)
     parser.add_argument('--e',type=int,default=100)
+    parser.add_argument('--load',type=int,default=None)
     args = parser.parse_args()
     data_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data+'.npz')
     
@@ -164,4 +172,4 @@ if __name__ == "__main__":
     print(log_file)
     train(game=args.game,cuda_idx=args.cuda_idx,path=args.model,
             B=args.B, T=args.T,lr=args.lr,data_path=data_path,
-            log_file=log_file,e=args.e)
+            log_file=log_file,e=args.e,load=args.load)
