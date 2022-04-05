@@ -39,7 +39,10 @@ class MPC_planner:
 
 
         if goal_weights is None:
-            goal_weights = np.load(wpath)
+            if wpath is not None:
+                goal_weights = torch.tensor(np.load(wpath)).type(torch.float)
+            else:
+                goal_weights=torch.ones(nx,dtype=torch.float)
         self._goal_weights = goal_weights
         q = torch.cat((
             goal_weights,
