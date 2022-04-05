@@ -96,7 +96,7 @@ class LearnWeight:
 
     def train(self, e=100):
         print("Start training")
-        for i in range(e):
+        for i in tqdm(range(e)):
             s=0
             for j in range(len(self.obs)):
                 loss=self.w.grad(self.obs[j], self.reward[j])
